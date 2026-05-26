@@ -1,0 +1,112 @@
+Bug Fix Request: Unused Parameter in C++ Function
+
+1. Environment & Context
+
+Project: Generic C++ Project
+
+File Path: path/to/your/file.cpp
+
+Compiler Flag causing issue: -Werror=unused-parameter
+
+2. Error Log
+
+path/to/your/file.cpp:15:45: error: unused parameter 'unusedStr' [-Werror=unused-parameter]
+ void MyClass::processData(int data, const std::string &unusedStr)
+
+
+3. Original Code (Current Implementation)
+
+Around line 15 in MyClass.cpp:
+
+void MyClass::processData(int data, const std::string &unusedStr) 
+{
+    // Only 'data' is used. 'unusedStr' is not used.
+    std::cout << "Data: " << data << std::endl;
+}
+
+
+4. Proposed Fixes (Solutions with General Templates)
+
+The following three methods resolve the unused parameter error under the -Werror=unused-parameter flag. They are presented as General Templates followed by an application example to help AI models easily map the pattern to any function.
+
+Option 1: Commenting out the unused parameter name (Recommended for pure C++)
+
+This is the cleanest approach when the parameter is required by an interface but not used in the implementation.
+
+General Template:
+
+// Before:
+ReturnType FunctionName(ParameterType parameterName) { ... }
+
+// After:
+ReturnType FunctionName(ParameterType /*parameterName*/) { ... }
+
+
+Applied to this issue:
+
+// Suppress warning by commenting out the parameter name
+void MyClass::processData(int data, const std::string &/*unusedStr*/) 
+{
+    std::cout << "Data: " << data << std::endl;
+}
+
+
+Option 2: Casting to void (Traditional C/C++ Approach)
+
+An alternative approach often used in legacy codebases or when the parameter might be used in future revisions.
+
+General Template:
+
+// Before:
+ReturnType FunctionName(ParameterType parameterName) 
+{
+    // parameterName is not used
+}
+
+// After:
+ReturnType FunctionName(ParameterType parameterName) 
+{
+    (void)parameterName; // Explicitly silence the compiler warning
+}
+
+
+Applied to this issue:
+
+void MyClass::processData(int data, const std::string &unusedStr) 
+{
+    (void)unusedStr; // Cast to void to suppress unused-parameter warning
+    std::cout << "Data: " << data << std::endl;
+}
+
+
+Option 3: Using [[maybe_unused]] attribute (Modern C++17 or newer)
+
+The modern C++ standard approach to signal to the compiler that a parameter might purposefully go unused.
+
+General Template:
+
+// Before:
+ReturnType FunctionName(ParameterType parameterName) { ... }
+
+// After:
+ReturnType FunctionName([[maybe_unused]] ParameterType parameterName) { ... }
+
+
+Applied to this issue:
+
+void MyClass::processData(int data, [[maybe_unused]] const std::string &unusedStr) 
+{
+    std::cout << "Data: " << data << std::endl;
+}
+
+
+5. Unified Diff (For Option 1 - Recommended)
+
+diff --git a/src/utils/MyClass.cpp b/src/utils/MyClass.cpp
+--- a/src/utils/MyClass.cpp
++++ b/src/utils/MyClass.cpp
+@@ -15,3 +15,3 @@
+-void MyClass::processData(int data, const std::string &unusedStr)
++void MyClass::processData(int data, const std::string &/*unusedStr*/)
+ {
+ }
