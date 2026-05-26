@@ -1,0 +1,22 @@
+# Skill: Fix -Werror=missing-declarations in C/C++
+
+## Description
+This error occurs when a function is defined in a .c file but does not have a declaration (prototype) in a header (.h) file.
+
+## How to fix
+1. Identify the function causing the error (e.g., `int check_buffer(void)`)
+2. Add the function prototype to the relevant header file (usually the .h file with the same name as the .c)
+	- If the function is only used within the .c file, you can add the `static` keyword to its definition in the .c file
+	- If the function is used in multiple files, add the prototype to the .h file
+3. If the function is only used under a macro (e.g., #ifdef DLT_NETWORK_TRACE_ENABLE), wrap the prototype with the corresponding macro in the .h file
+
+## Example
+// In xyz_user.c:
+#ifdef XYZ_NETWORK_TRACE_ENABLE
+int check_buffer(void) { ... }
+#endif
+
+// In dlt_user.h:
+#ifdef XYZ_NETWORK_TRACE_ENABLE
+int check_buffer(void);
+#endif
