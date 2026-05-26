@@ -1,0 +1,11 @@
+.../include/xyz/xyz_common.h:488:1: error: packed attribute is unnecessary [-Werror=packed]
+
+} DLT_XYZ xyzExtendedHeader; how to set gcc to pass
+
+
+Makefile
+	CFLAGS += -Wno-error=packed
+CMake
+	add_compile_options(-Wno-error=packed)
+	# Or for a specific target:
+	target_compile_options(your_target_name PRIVATE -Wno-error=packed)
