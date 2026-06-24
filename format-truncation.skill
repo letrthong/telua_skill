@@ -1,0 +1,25 @@
+# Skill: Fix -Werror=format-truncation and snprintf buffer size warnings in C/C++
+
+## Description
+This error occurs when the compiler detects that the output of snprintf (or similar functions) may be truncated because the buffer size is too small for the formatted string, especially when using format directives. With -Werror=format-truncation, this warning becomes a build-breaking error.
+
+### Example Error
+```
+error: ': ' directive output may be truncated writing 2 bytes into a region of size between 1 and 3 [-Werror=format-truncation=]
+snprintf(text, 9, "%.6x: ", value);
+```
+
+## How to fix
+- Increase the buffer size passed to snprintf to ensure it is large enough for the longest possible output, including the null terminator.
+- Double-check the format string and the maximum value that can be printed.
+
+// Before:
+snprintf(buf, 9, "%.6x: ", value);
+// After:
+snprintf(buf, 10, "%.6x: ", value); // 8 hex digits + ": " + null terminator
+
+- If the buffer is fixed-size, ensure all format strings and values fit within the buffer.
+
+## References
+- GCC documentation: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-truncation
+- snprintf: https://en.cppreference.com/w/c/io/fprintf

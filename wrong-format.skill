@@ -1,0 +1,57 @@
+# Skill: Fix -Werror=format and format string mismatches in C/C++
+
+## Description
+This error occurs when the format specifier in a printf-like function (e.g., printf, fprintf, sprintf, dlt_vlog, etc.) does not match the type of the argument provided. When compiled with -Werror=format, this warning becomes a build-breaking error.
+
+### Example Error
+```
+error: format '%u' expects argument of type 'unsigned int', but argument 4 has type 'int32_t' {aka 'int'} [-Werror=format=]
+```
+
+## How to fix
+1. Identify the format specifier and the argument type in the error message.
+2. Change the format specifier to match the argument type:
+   - Use %d for int, int32_t
+   - Use %u for unsigned int, uint32_t
+   - Use %ld for long, %lu for unsigned long
+   - Use %lld for long long, %llu for unsigned long long
+   - Use %f for float/double
+   - For fixed-width types (int32_t, uint32_t, etc.), you can use macros from <inttypes.h> (e.g., PRId32, PRIu32)
+3. Rebuild and verify the warning/error is gone.
+
+## Example Fix
+// Before:
+printf("Value=%u\n", my_int32);
+// After:
+printf("Value=%d\n", my_int32);
+
+// Or, for portable code:
+printf("Value=%" PRId32 "\n", my_int32);
+
+// Mixed signed/unsigned arguments:
+// Before:
+printf("A=%d, B=%d, C=%d\n", a_unsigned, b_unsigned, c_signed);
+// After:
+printf("A=%u, B=%u, C=%d\n", a_unsigned, b_unsigned, c_signed);
+
+// Wrong: using %u for int32_t (signed int)
+// Before:
+printf("Buffer size = %u\n", my_int32);
+// After:
+printf("Buffer size = %d\n", my_int32);
+
+// Wrong: using %u for int32_t (signed int) in memory allocation log
+// Before:
+printf("Cannot allocate memory for payload buffer of size %u!\n", my_int32);
+// After:
+printf("Cannot allocate memory for payload buffer of size %d!\n", my_int32);
+
+// Wrong: using %d for unsigned int (enum/bitfield/unsigned)
+// Before:
+printf("Wrong parameter for mode: %d\n", my_unsigned);
+// After:
+printf("Wrong parameter for mode: %u\n", my_unsigned);
+
+## References
+- GCC documentation: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat
+- C99 format macros: https://en.cppreference.com/w/c/types/integer

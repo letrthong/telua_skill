@@ -1,0 +1,24 @@
+# Skill: Fix -Werror=double-promotion and float/double argument warnings in C/C++
+
+## Description
+This error occurs when a float is implicitly promoted to double in a variadic function (such as printf, snprintf, etc.), and the compiler is set to treat this as an error (e.g., with -Werror=double-promotion). This is common with format specifiers like %f, %g, etc.
+
+### Example Error
+```
+error: implicit conversion from 'float32_t' {aka 'float'} to 'double' when passing argument to function [-Werror=double-promotion]
+snprintf(value_text, textlength, "%g", value32f);
+```
+
+## How to fix
+Always cast float arguments to double when passing to printf-like functions:
+
+// Before:
+snprintf(buf, len, "%g", my_float);
+// After:
+snprintf(buf, len, "%g", (double)my_float);
+
+This ensures the correct type is passed and avoids the warning/error.
+
+## References
+- GCC documentation: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wdouble-promotion
+- C99 standard: https://en.cppreference.com/w/c/io/fprintf

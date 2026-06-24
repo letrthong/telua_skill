@@ -1,3 +1,4 @@
+# Skill: Fix -Werror=unused-parameter in C/C++
 Bug Fix Request: Unused Parameter in C++ Function
 
 1. Environment & Context

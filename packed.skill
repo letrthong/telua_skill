@@ -1,11 +1,99 @@
+# Skill: Fix -Werror=stringop-overflow and buffer overflow warnings/errors in GCC/Clang
+
+## Description
+The `-Werror=stringop-overflow` warning/error is triggered when the compiler detects that a string or memory operation (such as `snprintf`, `strcpy`, `memcpy`, etc.) may write more bytes than the destination buffer can hold, causing a buffer overflow. This is a critical safety issue and must be fixed to avoid undefined behavior or security vulnerabilities.
+
+### Example Error
+```
+.../dlt_offline_logstorage.c:1877:9: error: '__builtin___snprintf_chk' specified bound 1040 exceeds destination size 1024 [-Werror=stringop-overflow=]
+```
+
+## Solutions
+
+### 1. Ensure the bound does not exceed the buffer size
+Always use the actual buffer size as the bound for functions like `snprintf`, `strncpy`, etc. Do not pass a value larger than the buffer.
+
+### 2. Audit and refactor buffer usage
+If the buffer size is not sufficient for the intended data, increase the buffer size or refactor the code to use dynamic allocation or safer patterns.
+
+### 3. Add explicit truncation or error handling
+If truncation is acceptable, ensure the code handles it gracefully and logs a warning if data is cut off.
+
+## When to use which solution?
+- Always ensure the bound matches the actual buffer size.
+- For legacy code, prefer a quick fix by matching the bound to the buffer size, but consider a deeper audit for safety.
+
+## References
+- GCC documentation: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wstringop-overflow
+# Skill: Fix -Werror=format-truncation and format string/size mismatch warnings/errors in GCC/Clang
+
+## Description
+The `-Werror=format-truncation` warning/error is triggered when the compiler detects that a formatted output function (like `snprintf`) may write more characters than the destination buffer can hold, causing possible buffer overflows or truncated output. This is common when the buffer size is too small for the format string and its arguments.
+
+### Example Error
+```
+.../dlt_common.c:211:63: error: ': ' directive output may be truncated writing 2 bytes into a region of size between 1 and 3 [-Werror=format-truncation=]
+		 ret = snprintf(text, DLT_COMMON_HEX_LINELEN + 1, "%.6x: ", (uint32_t)lines * DLT_COMMON_HEX_CHARS);
+```
+
+## Solutions
+
+### 1. Increase the buffer size
+Increase the buffer size passed to `snprintf` or the macro defining the buffer, so it is large enough for the formatted string and all possible argument values.
+
+### 2. Adjust the format string
+Shorten the format string or use a more compact representation if possible.
+
+### 3. Refactor code to avoid risky patterns
+If possible, refactor the code to avoid using fixed-size buffers for formatted output, or use safer dynamic allocation.
+
+## When to use which solution?
+- If you control the code, prefer increasing the buffer size or refactoring for safety.
+- For legacy or 3rd-party code, increasing the buffer size is usually the safest quick fix.
+
+## References
+- GCC documentation: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wformat-truncation
+
+# Skill: Fix -Werror=packed or -Wpacked warnings/errors in GCC/Clang
+
+## Description
+The `-Werror=packed` (or `-Wpacked`) warning/error is triggered when the `__attribute__((packed))` is used unnecessarily on a struct or union. This can happen if the structure is already naturally aligned, or the attribute is not needed for your platform/ABI. When `-Werror=packed` is enabled, this warning becomes a build-breaking error.
+
+### Example Error
+```
 .../include/xyz/xyz_common.h:488:1: error: packed attribute is unnecessary [-Werror=packed]
+} DLT_XYZ xyzExtendedHeader;
+```
 
-} DLT_XYZ xyzExtendedHeader; how to set gcc to pass
+## Solutions
 
+### 1. Suppress the error via build flags (recommended for legacy/3rd-party code)
 
-Makefile
+- **Makefile:**
+	```makefile
 	CFLAGS += -Wno-error=packed
-CMake
+	```
+- **CMake (global):**
+	```cmake
 	add_compile_options(-Wno-error=packed)
-	# Or for a specific target:
+	```
+- **CMake (per target):**
+	```cmake
 	target_compile_options(your_target_name PRIVATE -Wno-error=packed)
+	```
+
+This disables treating the warning as an error, allowing the build to proceed.
+
+### 2. Remove unnecessary __attribute__((packed)) (if you control the code)
+If the attribute is not needed for ABI compatibility or memory layout, simply remove it from the struct/union definition.
+
+### 3. Use compiler-specific pragmas (not recommended for portable code)
+Some compilers allow you to selectively disable warnings around specific code regions using pragmas.
+
+## When to use which solution?
+- If you maintain the code and the attribute is not needed, remove it.
+- If you cannot change the code (e.g., 3rd-party or legacy), use the build flag to suppress the error.
+
+## References
+- GCC documentation: https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wpacked
+- Clang documentation: https://clang.llvm.org/docs/AttributeReference.html#packed-gnu-packed
