@@ -16,6 +16,12 @@ You **MUST** include the cleanup/shutdown lifecycle block in the appropriate dis
 if (mExecutor instanceof java.util.concurrent.ExecutorService) {
     ((java.util.concurrent.ExecutorService) mExecutor).shutdown();
 }
+
+if (mExecutor != null) {
+   mExecutor.shutdown();
+}
+
+mExecutor = null;
 ```
 
 ## AI Checklist for Code Generation
