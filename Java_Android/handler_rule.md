@@ -15,6 +15,7 @@ Never invoke methods directly on a returned object if that object can potentiall
 ### ❌ ANTI-PATTERN (Strictly Banned):
 Directly calling methods on a potential null-returning getter without verification.
 ```java
+import android.os.Handler;
 // Danger: If Handler.getMain() returns null, this throws a NullPointerException
 Handler.getMain().executeOrSendMessage(xyz);
 ```
