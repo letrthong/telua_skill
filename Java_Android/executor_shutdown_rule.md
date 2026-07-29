@@ -17,6 +17,7 @@ if (mExecutor instanceof java.util.concurrent.ExecutorService) {
     ((java.util.concurrent.ExecutorService) mExecutor).shutdown();
 }
 
+OR 
 if (mExecutor != null) {
    mExecutor.shutdown();
 }
