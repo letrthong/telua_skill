@@ -13,16 +13,18 @@ import java.util.concurrent.Executors;
  * Standard Threading & Asynchronous Task Manager Template.
  * 
  * Key Principles Demonstrated:
- * 1. Background execution using ExecutorService (off UI thread).
- * 2. Safe result dispatching back to Main Thread using Handler(Looper.getMainLooper()).
- * 3. Lifecycle cleanup in release() to prevent Memory Leaks and ANR crashes.
- * 4. Refactoring-safe TAG naming convention.
+ * 1. Idempotent init(): Safe against duplicate init() calls and allows clean re-initialization after release().
+ * 2. Background execution using ExecutorService (off UI thread).
+ * 3. Safe result dispatching back to Main Thread using Handler(Looper.getMainLooper()).
+ * 4. Lifecycle cleanup in release() to prevent Memory Leaks and ANR crashes.
+ * 5. Refactoring-safe TAG naming convention and Android Log standards.
  */
 public class ThreadingTemplate<T> {
     private static final String TAG = ThreadingTemplate.class.getSimpleName();
 
     private ExecutorService mExecutor;
     private Handler mMainHandler;
+    private boolean mIsInitialized;
 
     /**
      * Callback interface for receiving asynchronous execution results on the Main Thread.
@@ -34,14 +36,24 @@ public class ThreadingTemplate<T> {
 
     /**
      * Initializes background thread pool and main thread looper handler.
+     * Idempotent method: Safe to call multiple times or after release().
      */
-    public void init() {
+    public synchronized void init() {
+        if (mIsInitialized) {
+            // Safe guard against duplicate init calls
+            Log.d(TAG, "Already initialized. Skipping duplicate init() call.");
+            return;
+        }
+
         if (mExecutor == null || mExecutor.isShutdown()) {
             mExecutor = Executors.newSingleThreadExecutor();
         }
         if (mMainHandler == null) {
             mMainHandler = new Handler(Looper.getMainLooper());
         }
+
+        mIsInitialized = true;
+        Log.d(TAG, "ThreadingTemplate successfully initialized.");
     }
 
     /**
@@ -50,11 +62,12 @@ public class ThreadingTemplate<T> {
      * @param task Callable background operation
      * @param callback Callback triggered on the Main UI Thread
      */
-    public void executeAsync(Callable<T> task, TaskCallback<T> callback) {
+    public synchronized void executeAsync(Callable<T> task, TaskCallback<T> callback) {
         Objects.requireNonNull(task, "Task cannot be null");
         Objects.requireNonNull(callback, "Callback cannot be null");
 
-        if (mExecutor == null || mExecutor.isShutdown()) {
+        // Automatically re-initialize if called after release()
+        if (!mIsInitialized) {
             init();
         }
 
@@ -77,9 +90,14 @@ public class ThreadingTemplate<T> {
 
     /**
      * Cleans up all pending callbacks and shuts down background thread pools.
-     * Must be called during component teardown (e.g., onDestroy).
+     * Idempotent method: Safe to call multiple times. Reset state allows future re-initialization.
      */
-    public void release() {
+    public synchronized void release() {
+        if (!mIsInitialized) {
+            Log.d(TAG, "Already released or not initialized. Skipping duplicate release() call.");
+            return;
+        }
+
         if (mMainHandler != null) {
             mMainHandler.removeCallbacksAndMessages(null);
             mMainHandler = null;
@@ -89,5 +107,12 @@ public class ThreadingTemplate<T> {
             mExecutor.shutdownNow();
             mExecutor = null;
         }
+
+        mIsInitialized = false;
+        Log.d(TAG, "ThreadingTemplate successfully released.");
+    }
+
+    public synchronized boolean isInitialized() {
+        return mIsInitialized;
     }
 }
