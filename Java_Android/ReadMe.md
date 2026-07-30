@@ -8,7 +8,7 @@ This file serves as the primary system directive and master index manifest for A
 
 Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this 4-step execution workflow:
 
-1. **Load Rules & Directives:** Load all 14 rule modules from the `rules/` directory.
+1. **Load Rules & Directives:** Load all 15 rule modules from the `rules/` directory.
 2. **Benchmark against Templates:** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 3. **Generate Implementation & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`).
 4. **Self-Audit Verification:** Validate generated code against the `AI Self-Correction Checklist` in each rule module and ensure zero Android Lint errors (`./gradlew lintDebug`).
@@ -23,6 +23,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit & idempotent `init()` / `release()` lifecycle pattern.
 
 ### 2. Safety, Threading & Resource Management Rules
+* 📄 **[api_timeout_resilience_rule.md](file:///d:/code/telua_skill/Java_Android/rules/api_timeout_resilience_rule.md)**: Evaluating library API latency, explicit 3-5s timeout configuration, and background thread Future timeout wrappers.
 * 📄 **[ui_thread_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ui_thread_rule.md)**: Main UI thread safety, ANR prevention, background execution, and thread-safe View updates.
 * 📄 **[executor_shutdown_rule.md](file:///d:/code/telua_skill/Java_Android/rules/executor_shutdown_rule.md)**: Mandatory shutdown of `Executor` / `ExecutorService` thread pools in lifecycle teardowns.
 * 📄 **[resource_leak_rule.md](file:///d:/code/telua_skill/Java_Android/rules/resource_leak_rule.md)**: `try-with-resources` for `AutoCloseable`, SQLite Cursor closing, symmetric `BroadcastReceiver` unregistering.
@@ -42,6 +43,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 ## 💻 Reference Template Examples (`examples/`)
 
 The following reference templates serve as gold-standard code benchmarks for AI code generation:
+* ☕ **[ApiTimeoutResilienceTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ApiTimeoutResilienceTemplate.java)**: Third-party SDK latency management, explicit 5-second timeout, and Future cancellation wrapper.
 * ☕ **[ThreadingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ThreadingTemplate.java)**: Asynchronous task execution, UI thread dispatching, and idempotent lifecycle cleanup (`init()` / `release()`).
 * ☕ **[ObserverStrategyFactoryTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ObserverStrategyFactoryTemplate.java)**: Integrated Observer, Strategy, and Factory pattern system eliminating if-else branching.
 * ☕ **[DesignPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DesignPatternTemplate.java)**: Strategy & Factory pattern implementation eliminating conditional branches.
