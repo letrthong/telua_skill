@@ -1,5 +1,7 @@
 package com.example.app.examples;
 
+import android.util.Log;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -11,6 +13,7 @@ import java.util.Optional;
  * 2. Factory Pattern: Encapsulating object creation logic using Java 17+ switch expressions.
  * 3. Null Safety: Utilizing java.util.Optional to eliminate NullPointerExceptions.
  * 4. Context Decoupling: Eliminating if-else conditional branches in the caller context.
+ * 5. Logging Standard: Using android.util.Log with dynamic TAG instead of System.out.println.
  */
 public class DesignPatternTemplate {
 
@@ -26,9 +29,11 @@ public class DesignPatternTemplate {
      * Concrete Strategy 1: Credit Card Payment.
      */
     public static class CreditCardPayment implements PaymentStrategy {
+        private static final String TAG = CreditCardPayment.class.getSimpleName();
+
         @Override
         public void pay(int amount) {
-            System.out.println("Paid $" + amount + " using Credit Card.");
+            Log.d(TAG, String.format("Paid $%d using Credit Card.", amount));
         }
 
         @Override
@@ -41,9 +46,11 @@ public class DesignPatternTemplate {
      * Concrete Strategy 2: PayPal Payment.
      */
     public static class PayPalPayment implements PaymentStrategy {
+        private static final String TAG = PayPalPayment.class.getSimpleName();
+
         @Override
         public void pay(int amount) {
-            System.out.println("Paid $" + amount + " using PayPal.");
+            Log.d(TAG, String.format("Paid $%d using PayPal.", amount));
         }
 
         @Override

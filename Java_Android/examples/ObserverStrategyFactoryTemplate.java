@@ -1,5 +1,7 @@
 package com.example.app.examples;
 
+import android.util.Log;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -13,6 +15,7 @@ import java.util.Optional;
  * 2. Strategy Pattern: Encapsulating interchangeable payment algorithms.
  * 3. Factory Pattern: Centralizing strategy instantiation with Java 17+ switch expressions and Optional.
  * 4. Loose Coupling & SRP: Decoupling core checkout logic from side-effects (Email, Rewards).
+ * 5. Logging Standard: Using android.util.Log with dynamic TAG instead of System.out.println.
  */
 public class ObserverStrategyFactoryTemplate {
 
@@ -29,9 +32,11 @@ public class ObserverStrategyFactoryTemplate {
      * Concrete Observer 1: Email Notification Service.
      */
     public static class EmailNotifier implements PaymentObserver {
+        private static final String TAG = EmailNotifier.class.getSimpleName();
+
         @Override
         public void onPaymentCompleted(int amount, String method) {
-            System.out.println("[Email Service] Sending receipt of $" + amount + " via " + method + ".");
+            Log.d(TAG, String.format("Sending receipt of $%d via %s.", amount, method));
         }
     }
 
@@ -39,10 +44,12 @@ public class ObserverStrategyFactoryTemplate {
      * Concrete Observer 2: Customer Loyalty Points System.
      */
     public static class RewardPointSystem implements PaymentObserver {
+        private static final String TAG = RewardPointSystem.class.getSimpleName();
+
         @Override
         public void onPaymentCompleted(int amount, String method) {
             int points = amount / 10;
-            System.out.println("[Reward System] Added " + points + " points to customer account.");
+            Log.d(TAG, String.format("Added %d points to customer account.", points));
         }
     }
 
@@ -57,9 +64,11 @@ public class ObserverStrategyFactoryTemplate {
     }
 
     public static class CreditCardPayment implements PaymentStrategy {
+        private static final String TAG = CreditCardPayment.class.getSimpleName();
+
         @Override
         public void pay(int amount) {
-            System.out.println("Paid $" + amount + " using Credit Card.");
+            Log.d(TAG, String.format("Paid $%d using Credit Card.", amount));
         }
 
         @Override
@@ -69,9 +78,11 @@ public class ObserverStrategyFactoryTemplate {
     }
 
     public static class PayPalPayment implements PaymentStrategy {
+        private static final String TAG = PayPalPayment.class.getSimpleName();
+
         @Override
         public void pay(int amount) {
-            System.out.println("Paid $" + amount + " using PayPal.");
+            Log.d(TAG, String.format("Paid $%d using PayPal.", amount));
         }
 
         @Override
