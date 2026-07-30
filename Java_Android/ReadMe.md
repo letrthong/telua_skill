@@ -1,19 +1,26 @@
 # AI Mandatory Engineering Standards & Rules Manifest for Java/Android
 
-This file serves as the primary system directive and index manifest for AI code generation, refactoring, and review within the `Java_Android` workspace.
-
-## 🚨 System Directive for AI
-Whenever generating, reviewing, or refactoring Java/Android code, the AI **MUST** strictly load, enforce, and verify all 14 rule modules defined in the `rules/` directory, the core `coding_style.md` guide, and use the reference templates in `examples/` as code generation benchmarks.
+This file serves as the primary system directive and master index manifest for AI code generation, refactoring, code review, and unit testing within the `Java_Android` workspace.
 
 ---
 
-## 📚 Master Index of Rule Modules
+## 🚨 AI System Directive & Execution Workflow
+
+Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this 4-step execution workflow:
+
+1. **Load Rules & Directives:** Load all 14 rule modules from the `rules/` directory.
+2. **Benchmark against Templates:** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
+3. **Generate Implementation & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`).
+4. **Self-Audit Verification:** Validate generated code against the `AI Self-Correction Checklist` in each rule module and ensure zero Android Lint errors (`./gradlew lintDebug`).
+
+---
+
+## 📚 Master Index of Rule Modules (`rules/`)
 
 ### 1. Architectural & Structural Rules
-* 📄 **[coding_style.md](file:///d:/code/telua_skill/Java_Android/coding_style.md)**: Core Java engineering standards, modern syntax, immutability, and English documentation.
 * 📄 **[design_pattern_architecture_rule.md](file:///d:/code/telua_skill/Java_Android/rules/design_pattern_architecture_rule.md)**: MVC/MVVM separation, Strategy, Observer, Factory, and Dependency Inversion.
 * 📄 **[encapsulation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/encapsulation_rule.md)**: Strict private member field access, prohibition of public fields, defensive copying.
-* 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit `init()` / `release()` lifecycle pattern.
+* 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit & idempotent `init()` / `release()` lifecycle pattern.
 
 ### 2. Safety, Threading & Resource Management Rules
 * 📄 **[ui_thread_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ui_thread_rule.md)**: Main UI thread safety, ANR prevention, background execution, and thread-safe View updates.
@@ -27,7 +34,7 @@ Whenever generating, reviewing, or refactoring Java/Android code, the AI **MUST*
 * 📄 **[for_loop_rule.md](file:///d:/code/telua_skill/Java_Android/rules/for_loop_rule.md)**: Prohibition of manual `for(int i=0;...)` loops; mandatory use of enhanced `for(Item item : list)` or Java Streams.
 * 📄 **[exception_handling_rule.md](file:///d:/code/telua_skill/Java_Android/rules/exception_handling_rule.md)**: Prohibition of empty catch blocks, catching specific exception types, preserving exception cause chaining.
 * 📄 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md)**: Prohibition of `System.out.println()` / `e.printStackTrace()`, dynamic `TAG = MyClass.class.getSimpleName()`, PII data protection, `BuildConfig.DEBUG` guarding.
-* 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern.
+* 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern, and mandatory test generation.
 * 📄 **[checkstyle_lint_rule.md](file:///d:/code/telua_skill/Java_Android/rules/checkstyle_lint_rule.md)**: Checkstyle formatting, PMD quality gates, and Gradle Android Lint verification (`./gradlew lint`).
 
 ---
@@ -35,9 +42,9 @@ Whenever generating, reviewing, or refactoring Java/Android code, the AI **MUST*
 ## 💻 Reference Template Examples (`examples/`)
 
 The following reference templates serve as gold-standard code benchmarks for AI code generation:
-* ☕ **[ObserverStrategyFactoryTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ObserverStrategyFactoryTemplate.java)**: Integrated Observer, Strategy, and Factory pattern system.
-* ☕ **[DesignPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DesignPatternTemplate.java)**: Strategy & Factory pattern implementation eliminating if-else branching.
-* ☕ **[ThreadingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ThreadingTemplate.java)**: Asynchronous task execution, UI thread dispatching, and lifecycle cleanup.
+* ☕ **[ThreadingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ThreadingTemplate.java)**: Asynchronous task execution, UI thread dispatching, and idempotent lifecycle cleanup (`init()` / `release()`).
+* ☕ **[ObserverStrategyFactoryTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ObserverStrategyFactoryTemplate.java)**: Integrated Observer, Strategy, and Factory pattern system eliminating if-else branching.
+* ☕ **[DesignPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DesignPatternTemplate.java)**: Strategy & Factory pattern implementation eliminating conditional branches.
 * ☕ **[RepositoryPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/RepositoryPatternTemplate.java)**: Clean Architecture repository pattern, Java Records, Optional null safety.
 * ☕ **[SingletonTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SingletonTemplate.java)**: Thread-safe Bill Pugh Holder pattern and ApplicationContext leak prevention.
 
@@ -45,7 +52,7 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 
 ## 🛠️ Static Analysis Tools & Gradle Verification Commands
 
-All generated Java code **MUST** pass static analysis checks before code delivery.
+All generated Java code **MUST** pass static analysis checks before code delivery:
 
 ### 1. Run Android Lint via Gradle Terminal
 ```bash
