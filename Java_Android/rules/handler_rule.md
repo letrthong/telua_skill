@@ -4,37 +4,41 @@ This document defines mandatory coding standards and refactoring rules when work
 
 ---
 
-## 1. Core Rule: Avoid Unchecked Chained Invocations (Null Safety & Defensive Programming)
+## 1. Core Rules
 
-Never invoke methods directly on a returned object if that object can potentially be `null` (such as `Handler.getMain()` or similar factory/singleton getters), as this risks throwing a `NullPointerException`. Always assign the result to a local variable, check for `null`, and then execute the operation safely.
+### Rule 1.1: Avoid Unchecked Chained Invocations (Null Safety & Defensive Programming)
+Never invoke methods directly on a returned object if that object can potentially be `null` (such as factory/singleton getters like `UIController.getInstance().getPrimaryHandler()`), as this risks throwing a `NullPointerException`. Always assign the result to a local variable, check for `null`, and then execute the operation safely.
+
+### Rule 1.2: Mandatory Lifecycle Cleanup (Prevent Memory & Callback Leaks)
+Whenever an `android.os.Handler` is used to post delayed tasks or messages within a lifecycle-aware component (e.g., `Activity`, `Fragment`, `Service`), you **MUST** clear all pending callbacks and messages when the component reaches the end of its lifecycle (e.g., in `onDestroy()` or `onStop()`).
 
 ---
 
 ## 2. Code Transformation Examples
 
 ### ❌ ANTI-PATTERN (Strictly Banned):
-Directly calling methods on a potential null-returning getter without verification.
-```java
-import android.os.Handler;
-// Danger: If Handler.getMain() returns null, this throws a NullPointerException
-Handler.getMain().executeOrSendMessage(xyz);
-```
 
+#### 1. Chained Calls without Null Verification
 ```java
 // Danger: Chained calls without null safety guards
 UIController.getInstance().getPrimaryHandler().post(task);
 ```
 
-### ✅ REQUIRED BEST PRACTICE:
-Assign the instance to a local variable, perform an explicit `null` check, and then execute safely.
+#### 2. Failing to Remove Pending Callbacks on Destroy
 ```java
-// Safe execution pattern
-Handler handler = Handler.getMain();
-if (handler != null) {
-    handler.executeOrSendMessage(xyz);
+public class MyActivity extends Activity {
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+
+    public void startTimer() {
+        mHandler.postDelayed(this::updateUI, 5000);
+    }
+    // Danger: Missing onDestroy() cleanup! Pending runnable can crash UI after onDestroy.
 }
 ```
 
+### ✅ REQUIRED BEST PRACTICE:
+
+#### 1. Safe Null Guard & Local Assignment
 ```java
 // Safe execution pattern with chaining/complex getters
 Handler primaryHandler = UIController.getInstance().getPrimaryHandler();
@@ -46,11 +50,32 @@ if (primaryHandler != null) {
 }
 ```
 
+#### 2. Proper Handler Lifecycle Cleanup
+```java
+public class MyActivity extends Activity {
+    private final Handler mHandler = new Handler(Looper.getMainLooper());
+
+    public void startTimer() {
+        mHandler.postDelayed(this::updateUI, 5000);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        // Remove all pending messages and callbacks to prevent leaks & crashes
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+        }
+    }
+}
+```
+
 ---
 
 ## 3. AI Self-Correction & Verification Checklist
 
-Before outputting any Java code involving singleton getters, utility factories, or `Handler` instances, the AI must verify:
-1. [ ] Are there any direct chained calls on static getters (e.g., `Class.getSomething().method()`) without a null check?
-2. [ ] Is the retrieved instance safely stored in a local variable and checked against `null` before method invocation?
-3. [ ] Are all comments and error logs written in professional English?
+Before outputting any Java code involving `Handler` instances or singleton getters, the AI must verify:
+1. [ ] Are there any direct chained calls on getters without a `null` check?
+2. [ ] Is the retrieved instance safely stored in a local variable before method invocation?
+3. [ ] Are all pending callbacks cleared via `removeCallbacksAndMessages(null)` during teardown/`onDestroy()`?
+4. [ ] Are all comments and error logs written in professional English?
