@@ -6,12 +6,23 @@ This file serves as the primary system directive and master index manifest for A
 
 ## 🚨 AI System Directive & Execution Workflow
 
-Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this 4-step execution workflow:
+Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this 5-step execution workflow:
 
-1. **Load Rules & Directives:** Load all 16 rule modules from the `rules/` directory.
-2. **Benchmark against Templates:** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
-3. **Generate Implementation & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`).
-4. **Self-Audit & Knowledge Registry Update:** Validate generated code against the `AI Self-Correction Checklist` in each rule module, ensure zero Android Lint errors (`./gradlew lintDebug`), and update integration notes inside the **`docs/`** directory.
+1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
+2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
+3. **Load Rules & Directives (`rules/`):** Load all 16 rule modules from the `rules/` directory.
+4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
+5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
+
+---
+
+## 📁 Project Architecture & Directory Map
+
+* 📋 **[requirements/](file:///d:/code/telua_skill/Java_Android/requirements/README.md)**: Business logic, feature requirements, user stories, and acceptance criteria.
+* 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
+* 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 6 gold-standard benchmark reference templates.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 16 mandatory engineering quality & safety rule modules.
 
 ---
 
@@ -38,13 +49,6 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md)**: Prohibition of `System.out.println()` / `e.printStackTrace()`, dynamic `TAG = MyClass.class.getSimpleName()`, PII data protection, `BuildConfig.DEBUG` guarding.
 * 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern, and mandatory test generation.
 * 📄 **[checkstyle_lint_rule.md](file:///d:/code/telua_skill/Java_Android/rules/checkstyle_lint_rule.md)**: Checkstyle formatting, PMD quality gates, and Gradle Android Lint verification (`./gradlew lint`).
-
----
-
-## 📁 Shared Knowledge Registry (`docs/`)
-
-Integration documentation for third-party SDKs, libraries, and hardware interfaces are stored persistently in the `docs/` directory:
-* 📄 **[example_sdk_integration.md](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Reference integration note format detailing imports, `build.gradle`/`Android.bp` dependencies, canonical usage, and ANR/timeout risks.
 
 ---
 
