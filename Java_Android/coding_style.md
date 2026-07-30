@@ -97,25 +97,6 @@ public record TransactionDto(
 * **Comprehensions over Loops:** Use list, dict, and set comprehensions instead of manual `for` loop appends.
 * **Strict Type Hinting:** Every function/method signature must include complete parameter and return type hints.
 
-#### ❌ ANTI-PATTERN:
-```python
-def extract_active_usernames(users):
-    result = []
-    for i in range(len(users)):
-        if users[i]['is_active']:
-            result.append(users[i]['username'])
-    return result
-```
-
-#### ✅ REQUIRED BEST PRACTICE:
-```python
-from typing import List, Dict, Any
-
-def extract_active_usernames(users: List[Dict[str, Any]]) -> List[str]:
-    """Extract usernames of active users from the input list using comprehension."""
-    return [user["username"] for user in users if user.get("is_active", False)]
-```
-
 ---
 
 ## 4. AI Self-Correction & Verification Checklist
