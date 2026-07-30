@@ -1,31 +1,57 @@
 # AI Instructions: Mandatory Executor Shutdown Rule
 
 ## CRITICAL RULE: ALWAYS SHUTDOWN EXECUTORS
-Whenever you generate, refactor, or review code that initializes or uses an `Executor` or `ExecutorService` (specifically instances like `mExecutor = Executors.newSingleThreadExecutor()` or similar thread pools), you **MUST** ensure that a corresponding `shutdown()` call is included when the object or component reaches the end of its lifecycle.
+Whenever you generate, refactor, or review code that initializes or uses an `Executor` or `ExecutorService` (specifically instances like `Executors.newSingleThreadExecutor()` or similar thread pools), you **MUST** ensure that a corresponding `shutdown()` or `shutdownNow()` call is included when the object or component reaches the end of its lifecycle.
 
 ## Why This Matters
 Failing to shut down an `ExecutorService` keeps background threads alive, leading to severe memory leaks, lingering background tasks, and application hangs (especially in Android/Java environments).
 
-## Implementation Pattern
-Whenever you write code containing an executor definition like:
-```java
-private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
-```
-You **MUST** include the cleanup/shutdown lifecycle block in the appropriate disposal method (e.g., `onDestroy()`, `close()`, `release()`, or `shutdown()`):
-```java
-if (mExecutor instanceof java.util.concurrent.ExecutorService) {
-    ((java.util.concurrent.ExecutorService) mExecutor).shutdown();
-}
+---
 
-OR 
-import java.util.concurrent.ExecutorService;
-if (mExecutor != null) {
-   mExecutor.shutdown();
-}
+## Code Transformation Examples
 
-mExecutor = null;
+### ❌ ANTI-PATTERN (Strictly Banned):
+Initializing an executor without cleanup in the teardown/destroy method.
+```java
+public class DataManager {
+    private final ExecutorService mExecutor = Executors.newSingleThreadExecutor();
+    
+    // Danger: Missing onDestroy() or cleanup method to shutdown mExecutor!
+}
 ```
+
+### ✅ REQUIRED BEST PRACTICE:
+
+#### Option A: Standard ExecutorService Field
+```java
+public class DataManager {
+    private ExecutorService mExecutor = Executors.newSingleThreadExecutor();
+
+    public void onDestroy() {
+        if (mExecutor != null) {
+            mExecutor.shutdownNow(); // Cancels ongoing tasks immediately when lifecycle ends
+            mExecutor = null;
+        }
+    }
+}
+```
+
+#### Option B: Generic Executor Interface Field
+```java
+public class DataManager {
+    private final Executor mExecutor = Executors.newSingleThreadExecutor();
+
+    public void release() {
+        if (mExecutor instanceof ExecutorService executorService) {
+            executorService.shutdownNow();
+        }
+    }
+}
+```
+
+---
 
 ## AI Checklist for Code Generation
-1. Did I initialize `mExecutor` (or any `ExecutorService`)? -> **Yes**
-2. Have I added the matching `shutdown()` check in the teardown/destroy method? -> **Must be Yes**
+1. [ ] Did I initialize an `Executor` or `ExecutorService`? -> **Yes**
+2. [ ] Did I add the matching `shutdown()` / `shutdownNow()` in `onDestroy()`, `close()`, or `release()`? -> **Must be Yes**
+3. [ ] If the field is `final`, did I avoid setting it to `null`? -> **Yes**
