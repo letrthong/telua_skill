@@ -10,7 +10,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
 2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
-3. **Load Rules & Directives (`rules/`):** Load all 16 rule modules from the `rules/` directory.
+3. **Load Rules & Directives (`rules/`):** Load all 17 rule modules from the `rules/` directory (including external URL inspection rules).
 4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
 
@@ -21,8 +21,9 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📋 **[requirements/](file:///d:/code/telua_skill/Java_Android/requirements/README.md)**: Business logic, feature requirements, user stories, and acceptance criteria.
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
+* 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
 * 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 6 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 16 mandatory engineering quality & safety rule modules.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 17 mandatory engineering quality & safety rule modules.
 
 ---
 
@@ -33,6 +34,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[encapsulation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/encapsulation_rule.md)**: Strict private member field access, prohibition of public fields, defensive copying.
 * 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit & idempotent `init()` / `release()` lifecycle pattern.
 * 📄 **[interface_integration_registry_rule.md](file:///d:/code/telua_skill/Java_Android/rules/interface_integration_registry_rule.md)**: Mandatory recording of integrated interfaces, imports, dependencies (`build.gradle`/`Android.bp`), usage, and risks inside the `docs/` folder.
+* 📄 **[external_reference_rule.md](file:///d:/code/telua_skill/Java_Android/rules/external_reference_rule.md)**: Automated fetching and refactoring of external AOSP/GitHub/SDK reference URLs to workspace standards.
 
 ### 2. Safety, Threading & Resource Management Rules
 * 📄 **[api_timeout_resilience_rule.md](file:///d:/code/telua_skill/Java_Android/rules/api_timeout_resilience_rule.md)**: Evaluating library API latency, explicit 3-5s timeout configuration, and background thread Future timeout wrappers.
