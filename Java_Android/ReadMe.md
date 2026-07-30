@@ -3,7 +3,7 @@
 This file serves as the primary system directive and index manifest for AI code generation, refactoring, and review within the `Java_Android` workspace.
 
 ## 🚨 System Directive for AI
-Whenever generating, reviewing, or refactoring Java/Android code, the AI **MUST** strictly load, enforce, and verify all 14 rule modules defined in the `rules/` directory and the core `coding_style.md` guide.
+Whenever generating, reviewing, or refactoring Java/Android code, the AI **MUST** strictly load, enforce, and verify all 14 rule modules defined in the `rules/` directory, the core `coding_style.md` guide, and use the reference templates in `examples/` as code generation benchmarks.
 
 ---
 
@@ -29,6 +29,17 @@ Whenever generating, reviewing, or refactoring Java/Android code, the AI **MUST*
 * 📄 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md)**: Prohibition of `System.out.println()` / `e.printStackTrace()`, dynamic `TAG = MyClass.class.getSimpleName()`, PII data protection, `BuildConfig.DEBUG` guarding.
 * 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern.
 * 📄 **[checkstyle_lint_rule.md](file:///d:/code/telua_skill/Java_Android/rules/checkstyle_lint_rule.md)**: Checkstyle formatting, PMD quality gates, and Gradle Android Lint verification (`./gradlew lint`).
+
+---
+
+## 💻 Reference Template Examples (`examples/`)
+
+The following reference templates serve as gold-standard code benchmarks for AI code generation:
+* ☕ **[ObserverStrategyFactoryTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ObserverStrategyFactoryTemplate.java)**: Integrated Observer, Strategy, and Factory pattern system.
+* ☕ **[DesignPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DesignPatternTemplate.java)**: Strategy & Factory pattern implementation eliminating if-else branching.
+* ☕ **[ThreadingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ThreadingTemplate.java)**: Asynchronous task execution, UI thread dispatching, and lifecycle cleanup.
+* ☕ **[RepositoryPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/RepositoryPatternTemplate.java)**: Clean Architecture repository pattern, Java Records, Optional null safety.
+* ☕ **[SingletonTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SingletonTemplate.java)**: Thread-safe Bill Pugh Holder pattern and ApplicationContext leak prevention.
 
 ---
 
