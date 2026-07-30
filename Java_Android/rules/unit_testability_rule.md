@@ -18,14 +18,18 @@ Keep business methods focused on a single responsibility with clear inputs and o
 ### Rule 1.4: Arrange-Act-Assert (AAA) Test Pattern
 Unit test methods **MUST** follow the **Arrange-Act-Assert (AAA)** structure and use clear `@Test` method naming: `methodName_givenState_shouldExpectedBehavior()`.
 
+### Rule 1.5: Mandatory Accompanying Unit Test Generation
+Whenever generating, modifying, or refactoring Java business logic, services, repositories, or controllers, the AI **MUST ALWAYS** generate a matching JUnit/Mockito unit test class (e.g., `MyServiceTest`) containing test cases that cover both successful scenarios and edge/error cases.
+
 ---
 
 ## 2. Code Transformation Examples
 
-### ❌ ANTI-PATTERN (Untestable Code):
+### ❌ ANTI-PATTERN (Untestable Code & Missing Unit Tests):
 
 ```java
 // Bad: Hardcoded concrete dependencies, static time call -> Untestable!
+// Bad: Generating business code without providing the corresponding Unit Test class!
 public class OrderService {
     public boolean processOrder(Order order) {
         // Tightly coupled dependency - impossible to mock in unit tests!
@@ -39,9 +43,9 @@ public class OrderService {
 }
 ```
 
-### ✅ REQUIRED BEST PRACTICE (Testable Code & Unit Test):
+### ✅ REQUIRED BEST PRACTICE (Testable Code & Accompanying Unit Test):
 
-#### 1. Testable Class Design
+#### 1. Testable Class Design (`OrderService.java`)
 ```java
 public class OrderService {
     private final PaymentGateway mGateway;
@@ -60,7 +64,7 @@ public class OrderService {
 }
 ```
 
-#### 2. Clean Unit Test (Arrange-Act-Assert Pattern using Mockito/JUnit)
+#### 2. Accompanying Unit Test Class (`OrderServiceTest.java`)
 ```java
 @RunWith(MockitoJUnitRunner.class)
 public class OrderServiceTest {
@@ -89,6 +93,12 @@ public class OrderServiceTest {
         assertTrue(result);
         verify(mMockGateway).charge(100, 1000000L);
     }
+
+    @Test(expected = NullPointerException.class)
+    public void processOrder_givenNullOrder_shouldThrowException() {
+        // Edge case testing
+        mOrderService.processOrder(null);
+    }
 }
 ```
 
@@ -99,4 +109,5 @@ public class OrderServiceTest {
 Before emitting code to ensure unit testability:
 1. [ ] Are all external dependencies passed through constructor interfaces instead of `new`? -> **Must be Yes**.
 2. [ ] Are static system/time calls abstracted behind injectable interfaces? -> **Must be Yes**.
-3. [ ] Are Unit Test classes formatted using the Arrange-Act-Assert (AAA) pattern? -> **Must be Yes**.
+3. [ ] Did I generate an accompanying `@Test` unit test class alongside the implementation code? -> **Must be Yes**.
+4. [ ] Are Unit Test classes formatted using the Arrange-Act-Assert (AAA) pattern? -> **Must be Yes**.
