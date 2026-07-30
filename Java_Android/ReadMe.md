@@ -8,10 +8,10 @@ This file serves as the primary system directive and master index manifest for A
 
 Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this 4-step execution workflow:
 
-1. **Load Rules & Directives:** Load all 15 rule modules from the `rules/` directory.
+1. **Load Rules & Directives:** Load all 16 rule modules from the `rules/` directory.
 2. **Benchmark against Templates:** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 3. **Generate Implementation & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`).
-4. **Self-Audit Verification:** Validate generated code against the `AI Self-Correction Checklist` in each rule module and ensure zero Android Lint errors (`./gradlew lintDebug`).
+4. **Self-Audit & Knowledge Registry Update:** Validate generated code against the `AI Self-Correction Checklist` in each rule module, ensure zero Android Lint errors (`./gradlew lintDebug`), and update integration notes inside the **`docs/`** directory.
 
 ---
 
@@ -21,6 +21,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[design_pattern_architecture_rule.md](file:///d:/code/telua_skill/Java_Android/rules/design_pattern_architecture_rule.md)**: MVC/MVVM separation, Strategy, Observer, Factory, and Dependency Inversion.
 * 📄 **[encapsulation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/encapsulation_rule.md)**: Strict private member field access, prohibition of public fields, defensive copying.
 * 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit & idempotent `init()` / `release()` lifecycle pattern.
+* 📄 **[interface_integration_registry_rule.md](file:///d:/code/telua_skill/Java_Android/rules/interface_integration_registry_rule.md)**: Mandatory recording of integrated interfaces, imports, dependencies (`build.gradle`/`Android.bp`), usage, and risks inside the `docs/` folder.
 
 ### 2. Safety, Threading & Resource Management Rules
 * 📄 **[api_timeout_resilience_rule.md](file:///d:/code/telua_skill/Java_Android/rules/api_timeout_resilience_rule.md)**: Evaluating library API latency, explicit 3-5s timeout configuration, and background thread Future timeout wrappers.
@@ -37,6 +38,13 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md)**: Prohibition of `System.out.println()` / `e.printStackTrace()`, dynamic `TAG = MyClass.class.getSimpleName()`, PII data protection, `BuildConfig.DEBUG` guarding.
 * 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern, and mandatory test generation.
 * 📄 **[checkstyle_lint_rule.md](file:///d:/code/telua_skill/Java_Android/rules/checkstyle_lint_rule.md)**: Checkstyle formatting, PMD quality gates, and Gradle Android Lint verification (`./gradlew lint`).
+
+---
+
+## 📁 Shared Knowledge Registry (`docs/`)
+
+Integration documentation for third-party SDKs, libraries, and hardware interfaces are stored persistently in the `docs/` directory:
+* 📄 **[example_sdk_integration.md](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Reference integration note format detailing imports, `build.gradle`/`Android.bp` dependencies, canonical usage, and ANR/timeout risks.
 
 ---
 
