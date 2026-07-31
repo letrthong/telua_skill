@@ -10,7 +10,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
 2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
-3. **Load Rules & Directives (`rules/`):** Load all 20 rule modules from the `rules/` directory (including parameter limits & magic number rules).
+3. **Load Rules & Directives (`rules/`):** Load all 21 rule modules from the `rules/` directory (including objects and data structures separation).
 4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
 
@@ -22,8 +22,8 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 8 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 20 mandatory engineering quality & safety rule modules.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 9 gold-standard benchmark reference templates.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 21 mandatory engineering quality & safety rule modules.
 
 ---
 
@@ -31,6 +31,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 ### 1. Architectural & Structural Rules
 * 📄 **[design_pattern_architecture_rule.md](file:///d:/code/telua_skill/Java_Android/rules/design_pattern_architecture_rule.md)**: MVC/MVVM separation, Strategy, Observer, Factory, and Dependency Inversion.
+* 📄 **[objects_and_data_structures_rule.md](file:///d:/code/telua_skill/Java_Android/rules/objects_and_data_structures_rule.md)**: Strict Clean Code Chapter 6 separation of Data Structures (DTOs/Records) from Behavior Processors/Services.
 * 📄 **[encapsulation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/encapsulation_rule.md)**: Strict private member field access, prohibition of public fields, defensive copying.
 * 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit & idempotent `init()` / `release()` lifecycle pattern.
 * 📄 **[method_length_and_file_structure_rule.md](file:///d:/code/telua_skill/Java_Android/rules/method_length_and_file_structure_rule.md)**: Maximum 35-line method length limit, SRP helper method decomposition, and strict 1-to-1 class-to-file name matching.
@@ -60,6 +61,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 ## 💻 Reference Template Examples (`examples/`)
 
 The following reference templates serve as gold-standard code benchmarks for AI code generation:
+* ☕ **[ProducerConsumerTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ProducerConsumerTemplate.java)**: Production-grade Producer-Consumer thread pattern with Bounded Blocking Queue backpressure control preventing thread hangs and OOM crashes.
 * ☕ **[CarServiceConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarServiceConnectionTemplate.java)**: Non-blocking Android Automotive `Car.createCar` connection offloaded to a background thread executor with idempotent lifecycle teardown.
 * ☕ **[DualThreadConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DualThreadConnectionTemplate.java)**: Asynchronous connection thread signaling backend ready state to event receiver thread.
 * ☕ **[ApiTimeoutResilienceTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ApiTimeoutResilienceTemplate.java)**: Third-party SDK latency management, explicit 5-second timeout, and Future cancellation wrapper.
