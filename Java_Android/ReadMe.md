@@ -10,7 +10,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
 2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
-3. **Load Rules & Directives (`rules/`):** Load all 18 rule modules from the `rules/` directory (including method length & file matching rules).
+3. **Load Rules & Directives (`rules/`):** Load all 20 rule modules from the `rules/` directory (including parameter limits & magic number rules).
 4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
 
@@ -23,7 +23,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
 * 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 8 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 18 mandatory engineering quality & safety rule modules.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 20 mandatory engineering quality & safety rule modules.
 
 ---
 
@@ -34,6 +34,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[encapsulation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/encapsulation_rule.md)**: Strict private member field access, prohibition of public fields, defensive copying.
 * 📄 **[lifecycle_init_rule.md](file:///d:/code/telua_skill/Java_Android/rules/lifecycle_init_rule.md)**: Lightweight constructors, prohibition of overridable methods in constructors, explicit & idempotent `init()` / `release()` lifecycle pattern.
 * 📄 **[method_length_and_file_structure_rule.md](file:///d:/code/telua_skill/Java_Android/rules/method_length_and_file_structure_rule.md)**: Maximum 35-line method length limit, SRP helper method decomposition, and strict 1-to-1 class-to-file name matching.
+* 📄 **[parameter_count_and_builder_rule.md](file:///d:/code/telua_skill/Java_Android/rules/parameter_count_and_builder_rule.md)**: Maximum 3-parameter limit per method, mandatory Parameter Object DTO and Builder Pattern for complex signatures.
 * 📄 **[interface_integration_registry_rule.md](file:///d:/code/telua_skill/Java_Android/rules/interface_integration_registry_rule.md)**: Mandatory recording of integrated interfaces, imports, dependencies (`build.gradle`/`Android.bp`), usage, and risks inside the `docs/` folder.
 * 📄 **[external_reference_rule.md](file:///d:/code/telua_skill/Java_Android/rules/external_reference_rule.md)**: Automated fetching and refactoring of external AOSP/GitHub/SDK reference URLs to workspace standards.
 
@@ -46,6 +47,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 ### 3. Code Hygiene, Null Safety & Quality Rules
 * 📄 **[naming_rule.md](file:///d:/code/telua_skill/Java_Android/rules/naming_rule.md)**: AOSP field prefixes (`m`/`s`), `UPPER_SNAKE_CASE` constants, JLS modifier ordering (`public static final`).
+* 📄 **[magic_number_immutability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/magic_number_immutability_rule.md)**: Total prohibition of magic numbers/strings, mandatory extraction of constants, and defensive immutability.
 * 📄 **[handler_rule.md](file:///d:/code/telua_skill/Java_Android/rules/handler_rule.md)**: Defensive null safety guards on chained getters, mandatory `removeCallbacksAndMessages(null)` cleanup.
 * 📄 **[for_loop_rule.md](file:///d:/code/telua_skill/Java_Android/rules/for_loop_rule.md)**: Prohibition of manual `for(int i=0;...)` loops; mandatory use of enhanced `for(Item item : list)` or Java Streams.
 * 📄 **[exception_handling_rule.md](file:///d:/code/telua_skill/Java_Android/rules/exception_handling_rule.md)**: Prohibition of empty catch blocks, catching specific exception types, preserving exception cause chaining.
