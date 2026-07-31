@@ -1,6 +1,6 @@
 # Design Patterns & Architecture Rules (design_pattern_architecture_rule.md)
 
-This document defines mandatory architectural standards, MVC/MVVM separation of concerns, and design pattern integration rules (Strategy, Observer, Factory, etc.) in code design.
+This document defines mandatory architectural standards, MVC/MVVM separation of concerns, design pattern integration rules (Strategy, Observer, Factory), and non-blocking callback protocols.
 
 ---
 
@@ -16,36 +16,50 @@ Code must depend on abstractions (interfaces or abstract classes), never on conc
 
 ### Rule 1.3: Mandatory Use of Standard Design Patterns
 * **Strategy Pattern:** Encapsulate interchangeable algorithms, payment gateways, or processing behaviors into interface-based strategies.
-* **Observer Pattern:** Use event-driven subscriptions to trigger side-effects (e.g., email notifications, inventory updates, point allocation) without tight coupling.
+* **Observer / Callback Pattern:** Use event-driven subscriptions to trigger side-effects (e.g., email notifications, inventory updates, point allocation) without tight coupling.
 * **Factory Pattern:** Centralize complex object creation logic into specialized Factory classes.
+
+### Rule 1.4: Non-Blocking Asynchronous Callback Dispatching Protocol
+* **Interface Naming & Functional Annotation:**
+  * Event Listeners **MUST** use the `On[Event]Listener` prefix (e.g., `OnCarServiceListener`).
+  * Asynchronous Callbacks **MUST** use the `[Feature]Callback` suffix (e.g., `ResultCallback`).
+  * Single-method interfaces **MUST** be annotated with `@FunctionalInterface`.
+* **Non-Blocking Dispatching:** Never invoke listener callbacks directly inline on heavy worker threads or lock-sensitive threads without offloading.
+  * **AOSP Executor Pattern:** Accept an `@CallbackExecutor Executor executor` parameter and dispatch callbacks via `executor.execute(() -> listener.onSuccess(data))`.
+  * **Main Looper Handler Pattern:** Post callbacks back to the Main UI Thread using `mMainHandler.post(() -> listener.onSuccess(data))`.
+* **Exception Isolation:** Wrap callback invocations inside a `try-catch (Throwable t)` block to isolate publisher loops from unexpected runtime exceptions thrown by subscriber implementations.
 
 ---
 
 ## 2. Code Transformation Examples
 
-### ❌ ANTI-PATTERN (Strictly Banned):
-Monolithic code mixing UI/Main logic with concrete payment gateways, hardcoded creation, and manual inline side-effects.
+### ❌ ANTI-PATTERN (Tightly Coupled Monolithic Code & Direct Inline Blocking Callbacks):
 
 ```java
-// Bad: Tightly coupled, no patterns used, mixed responsibilities
+// Bad: Tightly coupled, inline tight side-effects, direct blocking callback invocation
 public class OrderProcessor {
-    public void checkout(String orderId, int amount, String paymentType) {
-        // Hardcoded concrete creation & tight coupling
+    public interface OrderCallback {
+        void onPaid(String orderId) throws Exception; // Bad: Checked exception in callback!
+    }
+
+    public void checkout(String orderId, int amount, String paymentType, OrderCallback callback) {
         if (paymentType.equals("MOMO")) {
             System.out.println("Processing MoMo...");
         } else if (paymentType.equals("STRIPE")) {
             System.out.println("Processing Stripe...");
         }
         
-        // Inline tight side-effects
-        sendEmail(orderId);
-        updateInventory(orderId);
-        addVipPoints(amount);
+        // BAD: Direct blocking callback call inline! If subscriber hangs, publisher thread freezes!
+        try {
+            callback.onPaid(orderId);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 ```
 
-### ✅ REQUIRED BEST PRACTICE:
+### ✅ REQUIRED BEST PRACTICE (Decoupled Patterns & Non-Blocking Async Callbacks):
 
 #### 1. Strategy Pattern (Payment Gateways)
 ```java
@@ -57,7 +71,6 @@ public interface PaymentStrategy {
 public class StripePayment implements PaymentStrategy {
     @Override
     public boolean processPayment(int amount) {
-        // Stripe integration logic
         return true;
     }
     @Override
@@ -67,7 +80,6 @@ public class StripePayment implements PaymentStrategy {
 public class MomoPayment implements PaymentStrategy {
     @Override
     public boolean processPayment(int amount) {
-        // MoMo integration logic
         return true;
     }
     @Override
@@ -88,37 +100,16 @@ public class PaymentFactory {
 }
 ```
 
-#### 3. Observer Pattern (Decoupled Event Subscribers)
+#### 3. Non-Blocking Observer / Callback Protocol
 ```java
+@FunctionalInterface
 public interface OrderObserver {
     void onOrderPaid(String orderId, int amount);
 }
 
-public class EmailInvoiceService implements OrderObserver {
-    @Override
-    public void onOrderPaid(String orderId, int amount) {
-        // Send email invoice
-    }
-}
-
-public class InventoryService implements OrderObserver {
-    @Override
-    public void onOrderPaid(String orderId, int amount) {
-        // Deduct inventory stock
-    }
-}
-
-public class VipPointService implements OrderObserver {
-    @Override
-    public void onOrderPaid(String orderId, int amount) {
-        // Award VIP points
-    }
-}
-```
-
-#### 4. Decoupled Context / Processor
-```java
 public class OrderProcessor {
+    private static final String TAG = OrderProcessor.class.getSimpleName();
+
     private PaymentStrategy mPaymentStrategy;
     private final List<OrderObserver> mObservers = new ArrayList<>();
 
@@ -130,20 +121,30 @@ public class OrderProcessor {
         this.mObservers.add(observer);
     }
 
-    public void checkout(String orderId, int amount) {
+    public void checkout(Executor callbackExecutor, String orderId, int amount) {
+        Objects.requireNonNull(callbackExecutor, "Executor cannot be null");
         if (mPaymentStrategy == null) {
             throw new IllegalStateException("Payment strategy not configured!");
         }
 
         boolean success = mPaymentStrategy.processPayment(amount);
         if (success) {
-            notifyObservers(orderId, amount);
+            notifyObserversAsync(callbackExecutor, orderId, amount);
         }
     }
 
-    private void notifyObservers(String orderId, int amount) {
+    /**
+     * Dispatches callbacks asynchronously via Executor so publisher thread never hangs.
+     */
+    private void notifyObserversAsync(Executor executor, String orderId, int amount) {
         for (OrderObserver observer : mObservers) {
-            observer.onOrderPaid(orderId, amount);
+            executor.execute(() -> {
+                try {
+                    observer.onOrderPaid(orderId, amount);
+                } catch (Throwable t) {
+                    Log.e(TAG, "Unhandled exception in observer callback execution", t);
+                }
+            });
         }
     }
 }
@@ -153,9 +154,10 @@ public class OrderProcessor {
 
 ## 3. AI Self-Correction & Verification Checklist
 
-Before designing or generating code architecture:
-1. [ ] Is the business logic separated from the View / UI layer? -> **Must be Yes**.
+Before emitting code architecture or interfaces:
+1. [ ] Is business logic separated from the View / UI layer? -> **Must be Yes**.
 2. [ ] Are algorithms/gateways decoupled using the Strategy Pattern? -> **Must be Yes**.
 3. [ ] Are object creation responsibilities delegated to Factory classes? -> **Must be Yes**.
 4. [ ] Are side-effects (notifications, inventory, logging) handled via Observer events? -> **Must be Yes**.
-5. [ ] Are high-level modules depending on interfaces instead of concrete implementations? -> **Must be Yes**.
+5. [ ] Are callbacks dispatched asynchronously via `@CallbackExecutor Executor` or `Handler`? -> **Must be Yes**.
+6. [ ] Are callback invocations isolated inside `try-catch (Throwable t)` guards? -> **Must be Yes**.
