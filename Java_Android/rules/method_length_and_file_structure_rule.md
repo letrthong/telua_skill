@@ -17,6 +17,15 @@ This document defines mandatory standards for Java method length limits, Single 
   * Example: `public class MyCarServiceManager` **MUST** be saved in `MyCarServiceManager.java`.
 * **Prohibition of Multi-Class Files:** Never define multiple top-level `public` classes within a single `.java` file. Inner classes/interfaces should be `static inner` or moved to standalone files.
 
+### Rule 1.3: Prohibition of Flag Arguments (Boolean Control Parameters)
+* **Clean Code Chapter 3 Standard:** Never pass `boolean` flags to control method branching logic (e.g., `render(boolean isSuite)`). A boolean flag indicates that the method is performing more than one task (violating SRP).
+* **Decomposition Solution:** Split the method into separate, descriptive methods called directly by the client (e.g., `renderSuite()` and `renderSingle()`).
+
+### Rule 1.4: Avoid Negative Conditionals
+* **Cognitive Readability:** Always prefer positive conditional expressions over double negatives, as negative conditionals increase cognitive load.
+  * **❌ Anti-Pattern:** `if (!isNotReady) { ... }` or `if (!shouldNotProcess) { ... }`
+  * **✅ Best Practice:** `if (isReady) { ... }` or `if (shouldProcess) { ... }`
+
 ---
 
 ## 2. Code Transformation Examples

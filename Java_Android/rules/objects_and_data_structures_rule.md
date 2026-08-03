@@ -19,6 +19,25 @@ To enable parallel team development, independent unit testing, and technology sw
    * **Role:** "Business Decision Maker". Executes domain rules, calculations, and decision algorithms operating on DTOs.
    * **Restrictions:** **MUST NOT** execute direct SQL queries or hardcode database technologies.
 
+### Rule 1.2: Law of Demeter (Principle of Least Knowledge)
+* **Prohibition of "Train Wrecks":** A method should only invoke methods of direct dependencies, method parameters, or instantiated local objects. Do NOT navigate object graphs through long getter chains (`a.getB().getC().getD()`).
+* **Encapsulation Solution:** Delegate behavior to the containing object (e.g., `user.getZipCode()` instead of `user.getAddress().getCity().getZipCode()`).
+
+### Rule 1.3: Prefer Dedicated Value Objects & Encapsulated Boundary Conditions
+* **Primitive Obsession Avoidance:** Wrap raw primitive types (e.g., `String vin`, `int speed`) into dedicated immutable Value Objects (or Java `record`) when domain rules exist.
+* **Encapsulating Boundaries:** Encapsulate index calculations and boundary limit checks inside dedicated methods or domain models rather than scattering math offsets throughout business code.
+
+> [!IMPORTANT]
+> **Android Desugaring & Java Compatibility Note:**
+> When using modern Java features like Java `record` (Java 16+) or Java Stream APIs on Android apps targeting `minSdkVersion` < 34, ensure **Core Library Desugaring** is enabled in `app/build.gradle`:
+> ```groovy
+> compileOptions {
+>     coreLibraryDesugaringEnabled true
+>     sourceCompatibility JavaVersion.VERSION_17
+>     targetCompatibility JavaVersion.VERSION_17
+> }
+> ```
+
 ---
 
 ## 2. Code Transformation Examples

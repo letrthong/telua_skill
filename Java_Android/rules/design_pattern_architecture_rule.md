@@ -29,6 +29,22 @@ Code must depend on abstractions (interfaces or abstract classes), never on conc
   * **Main Looper Handler Pattern:** Post callbacks back to the Main UI Thread using `mMainHandler.post(() -> listener.onSuccess(data))`.
 * **Exception Isolation:** Wrap callback invocations inside a `try-catch (Throwable t)` block to isolate publisher loops from unexpected runtime exceptions thrown by subscriber implementations.
 
+### Rule 1.5: The 4 Rules of Simple Design (Kent Beck)
+Every software module designed or refactored in this codebase **MUST** satisfy Kent Beck's 4 rules in order of priority:
+1. **Passes all tests:** The implementation passes 100% of accompanying unit tests.
+2. **Contains no duplication (DRY):** Zero copy-pasted or redundant logic.
+3. **Expresses programmer intent:** Clear, self-documenting naming and architecture.
+4. **Minimizes classes and methods:** Avoid over-engineering or creating superfluous abstractions.
+
+### Rule 1.6: Code Smells Warning System
+Actively detect and eliminate the 6 classic architectural code smells:
+* **Rigidity:** Code is hard to change; a small change causes a cascade of dependent edits.
+* **Fragility:** A single edit breaks unrelated features in unexpected places.
+* **Immobility:** Internal logic cannot be reused in another module or project.
+* **Needless Complexity:** Over-engineered patterns where simple methods suffice.
+* **Needless Repetition:** Copy-pasted code blocks instead of shared helpers.
+* **Opacity:** Obscure, hard-to-read code logic.
+
 ---
 
 ## 2. Code Transformation Examples

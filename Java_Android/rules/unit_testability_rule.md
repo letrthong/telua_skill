@@ -21,6 +21,17 @@ Unit test methods **MUST** follow the **Arrange-Act-Assert (AAA)** structure and
 ### Rule 1.5: Mandatory Accompanying Unit Test Generation
 Whenever generating, modifying, or refactoring Java business logic, services, repositories, or controllers, the AI **MUST ALWAYS** generate a matching JUnit/Mockito unit test class (e.g., `MyServiceTest`) containing test cases that cover both successful scenarios and edge/error cases.
 
+### Rule 1.6: F.I.R.S.T Test Principles
+Unit tests **MUST** adhere to Clean Code Chapter 9 **F.I.R.S.T** standards:
+* **F (Fast):** Tests must run rapidly in milliseconds.
+* **I (Independent):** Tests must not depend on each other or run in a specific execution order.
+* **R (Repeatable):** Tests must produce identical results in any environment (Local, CI/CD, Offline).
+* **S (Self-Validating):** Tests must output a clear boolean Pass/Fail result without requiring manual log inspection.
+* **T (Timely):** Unit tests should be written concurrently with or just prior to production code.
+
+### Rule 1.7: One Concept Per Test Method
+Keep assertions in a test method focused on verifying a single logical concept. Avoid combining unrelated assertions across different business features inside a single `@Test` method.
+
 ---
 
 ## 2. Code Transformation Examples

@@ -15,6 +15,13 @@ Never invoke blocking calls (e.g., `Thread.sleep()`, `Future.get()`, `CountDownL
 ### Rule 1.3: Thread-Safe UI Updates
 All UI element modifications (Views, Adapters, Dialogs) **MUST** occur on the Main Thread. If executing from a background thread, dispatch the update back to the UI thread using `runOnUiThread()`, `Handler(Looper.getMainLooper())`, or LiveData/State.
 
+### Rule 1.4: Mandatory AndroidX Thread & Null Safety Annotations
+* **Static Analysis Annotations:** Always annotate methods and parameters with AndroidX annotations to enable IDE and Android Lint (`./gradlew lintDebug`) compile-time verification:
+  * `@WorkerThread`: Mark all background execution, database, or network methods.
+  * `@MainThread` / `@UiThread`: Mark methods that interact with UI components.
+  * `@NonNull` / `@Nullable`: Explicitly declare nullability contracts for parameters and return types.
+  * `@VisibleForTesting`: Annotate methods/fields whose visibility is relaxed solely for testing purposes.
+
 ---
 
 ## 2. Code Transformation Examples

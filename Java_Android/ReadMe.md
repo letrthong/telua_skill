@@ -14,6 +14,11 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
 
+> [!NOTE]
+> **Core Engineering Tenets:**
+> - **Boy Scout Rule:** Always leave the codebase cleaner than you found it. Refactor minor code smells when modifying existing files.
+> - **Always Find Root Cause:** Investigate and fix the underlying root cause of a defect. Never mask symptoms or swallow exceptions.
+
 ---
 
 ## 📁 Project Architecture & Directory Map

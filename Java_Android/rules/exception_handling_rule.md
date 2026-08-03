@@ -15,6 +15,16 @@ Avoid catching generic `Exception` or `Throwable` unless acting as a top-level g
 ### Rule 1.3: Preserve Exception Cause (Exception Chaining)
 When wrapping and rethrowing exceptions, always pass the original exception as the `cause` parameter to preserve the full stack trace.
 
+### Rule 1.4: Prohibition of Returning & Passing Null
+* **Clean Code Chapter 7 Standard:** Avoid returning `null` from methods. Returning `null` forces callers to write defensive `if (obj != null)` checks everywhere.
+* **Return Alternatives:** Return `Optional<T>` for single nullable items, `Collections.emptyList()` / `Collections.emptySet()` for collections, or Null Object Pattern instances.
+* **Avoid Passing Null:** Do not pass `null` as method arguments unless explicitly required by legacy APIs.
+
+### Rule 1.5: Command Query Separation (CQS)
+* **Separation of Side Effects:** A method must either perform an action (Command — mutating state) **OR** return data (Query — pure calculation without side effects), but never both.
+* **❌ Anti-Pattern:** `if (setAttr("key", "val")) { ... }` (Mutates attribute AND returns boolean).
+* **✅ Best Practice:** `if (attributeExists("key")) { setAttribute("key", "val"); }`
+
 ---
 
 ## 2. Code Transformation Examples
