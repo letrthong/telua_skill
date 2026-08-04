@@ -27,7 +27,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 9 gold-standard benchmark reference templates.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 10 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 22 mandatory engineering quality & safety rule modules.
 
 ---
@@ -76,6 +76,7 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[DesignPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DesignPatternTemplate.java)**: Strategy & Factory pattern implementation eliminating conditional branches.
 * ☕ **[RepositoryPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/RepositoryPatternTemplate.java)**: Clean Architecture repository pattern, Java Records, Optional null safety.
 * ☕ **[SingletonTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SingletonTemplate.java)**: Thread-safe Bill Pugh Holder pattern and ApplicationContext leak prevention.
+* ☕ **[ListenerPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ListenerPatternTemplate.java)**: Listener Pattern Architecture (`Source Service → Listener Interface → Owner Service`) demonstrated via `CloudEventDispatcherService` → `CloudEventListener` → `CloudNotificationService`.
 
 ---
 
