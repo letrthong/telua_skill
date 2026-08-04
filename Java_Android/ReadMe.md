@@ -27,7 +27,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 12 gold-standard benchmark reference templates.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 13 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 22 mandatory engineering quality & safety rule modules.
 
 ---
@@ -79,6 +79,7 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[CarPropertySubscriptionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarPropertySubscriptionTemplate.java)**: AOSP `CarPropertyManager` VHAL property registration, rate limiting (10Hz vs On-Change), and idempotent teardown.
 * ☕ **[AutomotiveFullArchitectureTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/AutomotiveFullArchitectureTemplate.java)**: Comprehensive Automotive architecture combining Singleton, Repository, Observer, Strategy, and Factory/Adapter patterns into one unified system.
 * ☕ **[AppLogger.java](file:///d:/code/telua_skill/Java_Android/examples/AppLogger.java)**: Production-grade logging utility benchmark implementing log_rule.md standards, internal DEBUG flag encapsulation, varargs string formatting, and legacy 23-character TAG truncation safety.
+* ☕ **[UnitTestTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/UnitTestTemplate.java)**: Gold-standard Unit Test benchmark implementing unit_testability_rule.md, Constructor Dependency Injection, JUnit 4 + Mockito stubbing/verification, and AAA pattern.
 
 ---
 
