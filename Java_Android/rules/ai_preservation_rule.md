@@ -42,6 +42,15 @@ While existing legacy code is preserved untouched, all **newly added code** (new
 * The traditional "Boy Scout Rule" (leaving the codebase cleaner than found) is strictly bounded to **newly added code** and **explicit user refactoring commands**.
 * When adding a new feature to an existing file, apply clean code standards strictly to your newly written code. Do NOT refactor surrounding legacy code blocks unless the user explicitly commands a refactoring task.
 
+### Rule 1.7: Safe Refactoring Directives When Unit Tests Exist
+When the user explicitly commands a code refactoring task on a module that has existing Unit Tests:
+1. **Baseline Test Execution:** The AI **MUST** run existing unit tests first (`./gradlew testDebugUnitTest`) to establish a 100% green passing baseline before making any code modifications.
+2. **Behavioral Contract Preservation:** True refactoring modifies internal structure without altering external behavior. Therefore, **ALL existing unit tests MUST continue to pass unmodified** after refactoring is completed.
+3. **Prohibition of Test Assertion Tampering:**
+   * **FORBIDDEN:** The AI **MUST NEVER** comment out failing assertions, delete failing unit test cases, or alter expected test outputs to force tests to pass after refactoring.
+   * **CORRECT ACTION:** If an existing unit test fails post-refactoring, it proves the refactored code broke a behavioral contract. The AI **MUST** fix the refactored source code to satisfy the existing test, NOT alter the test.
+4. **New Unit Tests for Extracted Helper Classes:** If refactoring extracts new helper classes or interfaces, the AI **MUST** generate new matching unit test suites ([unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)) for the extracted components while keeping existing test suites intact.
+
 ---
 
 ## 2. Examples: Correct vs. Incorrect AI Modification Behavior
@@ -72,6 +81,49 @@ public class VehicleBatteryManager {
     // Additive change: New requested method appended cleanly
     public int getBatteryPercentage() {
         return mCachedBatteryPercentage;
+    }
+}
+```
+
+### Scenario B: User asks "Add support for a new custom event trigger while preserving the legacy `onTrigger()` event handler in `VehicleEventManager.java`."
+
+```java
+// ❌ INCORRECT AI BEHAVIOR (Mutating existing onTrigger execution path & refactoring legacy logic):
+public class VehicleEventManager {
+    // DANGER: AI modified existing method signature and rewrote legacy onTrigger execution path!
+    public void onTrigger(int eventType, Bundle payload) {
+        // AI refactored legacy switch-case into new logic, risking regressions for legacy events!
+        if (eventType == NEW_CUSTOM_EVENT) {
+            handleCustomEvent(payload);
+        } else {
+            // AI modified legacy handling code!
+            processLegacyEventNewWay(eventType);
+        }
+    }
+}
+
+// ✅ REQUIRED AI BEHAVIOR (Preserving legacy onTrigger 100% untouched & adding dedicated new handler):
+public class VehicleEventManager {
+    // 1. Existing legacy onTrigger method preserved 100% untouched:
+    public void onTrigger(int legacyEventType, Bundle legacyPayload) {
+        // Original legacy event dispatching logic remains 100% intact
+        switch (legacyEventType) {
+            case EVENT_SPEED_WARNING:
+                handleSpeedWarning(legacyPayload);
+                break;
+            default:
+                Log.d(TAG, "Legacy event processed: " + legacyEventType);
+                break;
+        }
+    }
+
+    // 2. Additive change: Dedicated new handler added cleanly without touching legacy onTrigger logic
+    public void onCustomEventTrigger(CustomEventData customEvent) {
+        if (customEvent == null) {
+            return;
+        }
+        AppLogger.d(TAG, "New custom event triggered: " + customEvent.getEventId());
+        processCustomEventInternal(customEvent);
     }
 }
 ```
