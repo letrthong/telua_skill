@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Static Analysis, Checkstyle & Android Lint Rules (checkstyle_lint_rule.md)
 
 This document defines mandatory guidelines and CLI commands for running static analysis tools (Checkstyle, PMD, and Android Lint) to ensure zero-defect code quality.

@@ -64,3 +64,11 @@ Whenever performing code generation, refactoring, code review, or debugging with
    * 🧹 **Boy Scout Rule:** Leave modified files cleaner than found.
    * 🔍 **Root Cause Analysis:** Never mask symptoms or swallow exceptions silently.
    * 🧪 **Verification:** Run unit tests and static analysis verification commands before completing tasks.
+
+---
+
+## 📜 License, Copyright & AI Generation Notice
+
+This repository contains code templates generated and refactored by **Gemini 3.6 Pro** in pair-programming collaboration with the maintainer. AOSP reference code patterns are adapted under the **Apache License, Version 2.0**.
+
+For full details, see **[LICENSE.md](file:///d:/code/telua_skill/LICENSE.md)**.

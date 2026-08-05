@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Interface Integration & Dependency Registry Rules (interface_integration_registry_rule.md)
 
 This document defines mandatory guidelines for recording, updating, and referencing third-party SDKs, library interfaces, and system API integrations in a persistent `docs/` directory. This ensures both human engineers and AI agents maintain a shared knowledge registry without performing redundant full-codebase scans in future development cycles.

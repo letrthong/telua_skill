@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Exception Handling & Error Safety Rules (exception_handling_rule.md)
 
 This document defines mandatory guidelines for exception catching, error propagation, exception chaining, and preventing swallowed errors in Java/Android development.

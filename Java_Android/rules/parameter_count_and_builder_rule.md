@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Parameter Limit & Builder Pattern Rules (parameter_count_and_builder_rule.md)
 
 This document defines mandatory engineering standards for limiting method parameter counts (Max 3 parameters) and enforcing the Parameter Object DTO / Builder Pattern for complex signatures.

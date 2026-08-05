@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Magic Number Elimination & Immutability Rules (magic_number_immutability_rule.md)
 
 This document defines mandatory standards for eliminating magic numbers/strings and enforcing immutability practices (`final`, Java Records, unmodifiable collections).

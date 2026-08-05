@@ -1,8 +1,9 @@
 #!/bin/bash
 # ==============================================================================
-# Copyright (c) 2026 Telua. All rights reserved.
-# Build script for Android Service APK
-# Usage: ./build_apk.sh
+# Copyright (C) 2026 letrthong@gmail.com
+# Created & Maintained by: letrthong@gmail.com
+# Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+# Licensed under the Apache License, Version 2.0
 # ==============================================================================
 
 set -e

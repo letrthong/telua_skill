@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Design Patterns & Architecture Rules (design_pattern_architecture_rule.md)
 
 This document defines mandatory architectural standards, MVC/MVVM separation of concerns, design pattern integration rules (Strategy, Observer, Factory), and non-blocking callback protocols.

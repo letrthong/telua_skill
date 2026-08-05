@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Third-Party Library API Latency & Timeout Resilience Rules (api_timeout_resilience_rule.md)
 
 This document defines mandatory standards for evaluating execution latency of third-party library APIs/SDKs, configuring explicit timeouts, and wrapping potentially blocking 3-5 second calls in background threads to prevent UI hangs and ANR crashes.

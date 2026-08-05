@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # AIDL, Binder IPC & Parcelable Rules (aidl_binder_parcelable_rule.md)
 
 This document defines mandatory standards for implementing Android IPC (Inter-Process Communication) via AIDL interfaces, Binder transactions, and Parcelable data transfer objects in Java/Android system service development.

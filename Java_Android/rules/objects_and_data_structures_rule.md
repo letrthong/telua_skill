@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Objects, DTO, DAO, and Business Logic Separation Rule (objects_and_data_structures_rule.md)
 
 This document defines mandatory standards for separating DTOs (Data Transfer Objects), DAOs (Data Access Objects), Data Mappers/Parsers, and Business Logic Processors based on Clean Code Chapter 6 principles.

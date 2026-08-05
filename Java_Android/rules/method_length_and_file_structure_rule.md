@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Method Decomposition & File-Class Matching Rules (method_length_and_file_structure_rule.md)
 
 This document defines mandatory standards for Java method length limits, Single Responsibility Principle (SRP) method decomposition, and Java Language Specification (JLS) file-to-class naming rules.

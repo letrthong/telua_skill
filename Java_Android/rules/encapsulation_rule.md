@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Encapsulation & Member Field Access Rules (encapsulation_rule.md)
 
 This document defines mandatory object-oriented encapsulation standards, prohibiting direct access or public exposure of class member fields in Java/Android.

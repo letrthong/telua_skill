@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # External Code & Documentation Reference Rules (external_reference_rule.md)
 
 This document defines mandatory guidelines for AI code search, inspection, and architectural benchmarking when provided with external repository or documentation URLs (e.g., AOSP cs.android.com, googlesource.com, GitHub repositories, or official SDK docs).

@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Resource Leak Prevention Rules (resource_leak_rule.md)
 
 This document defines mandatory standards for resource lifecycle management, I/O handling, database cursor cleanup, and BroadcastReceiver unregistering in Java/Android.

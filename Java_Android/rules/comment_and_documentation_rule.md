@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Comment and Documentation Rules (comment_and_documentation_rule.md)
 
 This document defines mandatory standards for self-documenting code, Javadoc comments, and the elimination of redundant/noise comments based on Clean Code Chapter 4 principles.

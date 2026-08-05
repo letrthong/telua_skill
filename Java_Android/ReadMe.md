@@ -27,7 +27,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 13 gold-standard benchmark reference templates.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 14 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 23 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
@@ -114,6 +114,7 @@ flowchart LR
 The following reference templates serve as gold-standard code benchmarks for AI code generation:
 * ☕ **[ProducerConsumerTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ProducerConsumerTemplate.java)**: Production-grade Producer-Consumer thread pattern with Bounded Blocking Queue backpressure control preventing thread hangs and OOM crashes.
 * ☕ **[CarServiceConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarServiceConnectionTemplate.java)**: Non-blocking Android Automotive `Car.createCar` connection offloaded to a background thread executor with idempotent lifecycle teardown.
+* ☕ **[CarVolumeCallbackHandlerTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarVolumeCallbackHandlerTemplate.java)**: AOSP-adapted `RemoteCallbackList` subclass with custom metadata cookies (`ClientMetadataCookie`), UID-to-Binder mapping, background `HandlerThread` dispatching, and `onCallbackDied()` cleanup.
 * ☕ **[DualThreadConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/DualThreadConnectionTemplate.java)**: Asynchronous connection thread signaling backend ready state to event receiver thread.
 * ☕ **[ApiTimeoutResilienceTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ApiTimeoutResilienceTemplate.java)**: Third-party SDK latency management, explicit 5-second timeout, and Future cancellation wrapper.
 * ☕ **[ThreadingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ThreadingTemplate.java)**: Asynchronous task execution, UI thread dispatching, and idempotent lifecycle cleanup (`init()` / `release()`).
@@ -125,6 +126,21 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[AutomotiveFullArchitectureTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/AutomotiveFullArchitectureTemplate.java)**: Comprehensive Automotive architecture combining Singleton, Repository, Observer, Strategy, and Factory/Adapter patterns into one unified system.
 * ☕ **[AppLogger.java](file:///d:/code/telua_skill/Java_Android/examples/AppLogger.java)**: Production-grade logging utility benchmark implementing log_rule.md standards, internal DEBUG flag encapsulation, varargs string formatting, and legacy 23-character TAG truncation safety.
 * ☕ **[UnitTestTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/UnitTestTemplate.java)**: Gold-standard Unit Test benchmark implementing unit_testability_rule.md, Constructor Dependency Injection, JUnit 4 + Mockito stubbing/verification, and AAA pattern.
+
+### 💡 Featured Case Study: AOSP Integration & Rule Alignment (`CarVolumeCallbackHandler`)
+
+The [CarVolumeCallbackHandlerTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarVolumeCallbackHandlerTemplate.java) code template and its accompanying integration registry note [car_volume_callback_handler_integration.md](file:///d:/code/telua_skill/Java_Android/docs/car_volume_callback_handler_integration.md) serve as a primary **AOSP Case Study** demonstrating how external system code is ingested, refactored, and documented.
+
+#### 1. Enforced Rule Modules
+* 📜 **[aidl_binder_parcelable_rule.md](file:///d:/code/telua_skill/Java_Android/rules/aidl_binder_parcelable_rule.md):** Implements Rule 3.2 by subclassing `RemoteCallbackList<T>` to manage multi-client AIDL callbacks, attaching custom `ClientMetadataCookie` instances, and overriding `onCallbackDied()` to clean up secondary UID maps upon client process death.
+* 📜 **[external_reference_rule.md](file:///d:/code/telua_skill/Java_Android/rules/external_reference_rule.md):** Implements Rule 1.1 & 1.2 by fetching the raw AOSP source from `cs.android.com`, refactoring it to strict workspace standards, and logging reference details in `docs/`.
+* 📜 **[interface_integration_registry_rule.md](file:///d:/code/telua_skill/Java_Android/rules/interface_integration_registry_rule.md):** Implements Rule 1.1 by recording required imports, build manifest snippets (`build.gradle`/`Android.bp`), canonical usage patterns, and critical ANR/Deadlock risk warnings in `docs/car_volume_callback_handler_integration.md`.
+* 📜 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md):** Replaces raw AOSP `Slogf` calls with workspace-compliant `AppLogger` utility calls.
+* 📜 **[executor_shutdown_rule.md](file:///d:/code/telua_skill/Java_Android/rules/executor_shutdown_rule.md):** Enforces idempotent teardown inside `release()` by calling `mHandlerThread.quitSafely()` and `kill()`.
+
+#### 2. Why This Pair Is Necessary
+* **Prevents ANR & Deadlock:** Standard Binder callbacks can block Binder threads or deadlock if `beginBroadcast()` is invoked while holding locks. This pair documents and demonstrates the mandatory `HandlerThread` offloading and `try-finally` guard pattern.
+* **Eliminates Codebase Re-Scanning:** By capturing build manifests (`Android.bp`) and risk guardrails in `docs/car_volume_callback_handler_integration.md`, AI agents and developers can consume and extend this AOSP callback pattern instantly without re-scanning or searching external web repositories.
 
 ---
 

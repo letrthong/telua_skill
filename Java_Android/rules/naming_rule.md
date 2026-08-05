@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
+-->
+
 # Naming Conventions & Modifier Ordering Rules (naming_rule.md)
 
 This document defines mandatory standards for naming variables, constants, classes, and organizing Java access modifiers and member ordering in Android development.

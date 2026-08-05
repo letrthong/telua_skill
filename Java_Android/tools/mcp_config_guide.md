@@ -1,3 +1,10 @@
+<!--
+  Copyright (C) 2026 letrthong@gmail.com
+  Created & Maintained by: letrthong@gmail.com
+  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Licensed under the Apache License, Version 2.0
+-->
+
 # Model Context Protocol (MCP) Setup & Integration Guide (`tools/mcp_config_guide.md`)
 
 This document defines configuration instructions, recommended open-source MCP servers, and execution rules for setting up Model Context Protocol (MCP) servers in Visual Studio Code (VS Code) and AI Extensions for Java, Android, and Android Automotive OS (AAOS) development.
