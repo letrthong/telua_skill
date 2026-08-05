@@ -10,7 +10,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
 2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
-3. **Load Rules & Directives (`rules/`):** Load all 22 rule modules from the `rules/` directory (including non-blocking callback protocols).
+3. **Load Rules & Directives (`rules/`):** Load all 23 rule modules from the `rules/` directory (including AIDL/Binder IPC protocols).
 4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
 
@@ -28,7 +28,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
 * 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 13 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 22 mandatory engineering quality & safety rule modules.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 23 mandatory engineering quality & safety rule modules.
 
 ---
 
@@ -45,6 +45,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📄 **[external_reference_rule.md](file:///d:/code/telua_skill/Java_Android/rules/external_reference_rule.md)**: Automated fetching and refactoring of external AOSP/GitHub/SDK reference URLs to workspace standards.
 
 ### 2. Safety, Threading & Resource Management Rules
+* 📄 **[aidl_binder_parcelable_rule.md](file:///d:/code/telua_skill/Java_Android/rules/aidl_binder_parcelable_rule.md)**: Mandatory standards for AIDL interface definition, `oneway` async callbacks, Binder thread pool offloading (<5ms), 1MB transaction buffer limits, `RemoteCallbackList`, `linkToDeath()`, `Parcelable` field order consistency, caller permission checks, and `Binder.clearCallingIdentity()`.
 * 📄 **[api_timeout_resilience_rule.md](file:///d:/code/telua_skill/Java_Android/rules/api_timeout_resilience_rule.md)**: Evaluating library API latency, explicit 3-5s timeout configuration, and background thread Future timeout wrappers.
 * 📄 **[ui_thread_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ui_thread_rule.md)**: Main UI thread safety, ANR prevention, background execution, and thread-safe View updates.
 * 📄 **[executor_shutdown_rule.md](file:///d:/code/telua_skill/Java_Android/rules/executor_shutdown_rule.md)**: Mandatory shutdown of `Executor` / `ExecutorService` thread pools in lifecycle teardowns.
