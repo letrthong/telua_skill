@@ -10,13 +10,13 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
 2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
-3. **Load Rules & Directives (`rules/`):** Load all 23 rule modules from the `rules/` directory (including AIDL/Binder IPC protocols).
+3. **Load Rules & Directives (`rules/`):** Load all 24 rule modules from the `rules/` directory (including non-destructive AI code preservation directives).
 4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
 5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
 
 > [!NOTE]
 > **Core Engineering Tenets:**
-> - **Boy Scout Rule:** Always leave the codebase cleaner than you found it. Refactor minor code smells when modifying existing files.
+> - **Controlled Boy Scout Rule:** Apply clean code standards strictly to all newly added code. Refactor existing legacy code ONLY when explicitly requested by the user ([ai_preservation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ai_preservation_rule.md)).
 > - **Always Find Root Cause:** Investigate and fix the underlying root cause of a defect. Never mask symptoms or swallow exceptions.
 
 ---
@@ -28,7 +28,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/example_sdk_integration.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[tools/](file:///d:/code/telua_skill/Java_Android/tools/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
 * 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 14 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 23 mandatory engineering quality & safety rule modules.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 24 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
 
@@ -106,6 +106,7 @@ flowchart LR
 * 📄 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md)**: Prohibition of `System.out.println()` / `e.printStackTrace()`, dynamic `TAG = MyClass.class.getSimpleName()`, PII data protection, `BuildConfig.DEBUG` guarding.
 * 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern, and mandatory test generation.
 * 📄 **[checkstyle_lint_rule.md](file:///d:/code/telua_skill/Java_Android/rules/checkstyle_lint_rule.md)**: Checkstyle formatting, PMD quality gates, and Gradle Android Lint verification (`./gradlew lintDebug`).
+* 📄 **[ai_preservation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ai_preservation_rule.md)**: Strict additive-first policy, prohibition of unsolicited code refactoring, preservation of existing working logic/API contracts, and strict scope bounding.
 
 ---
 

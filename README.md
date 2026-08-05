@@ -29,13 +29,13 @@ telua_skill/
 
 Designed for mission-critical Android System Services, Automotive (AAOS) applications, and enterprise Java development:
 
-* 📜 **23 Quality & Safety Rule Modules ([rules/](file:///d:/code/telua_skill/Java_Android/rules/))**:
+* 📜 **24 Quality & Safety Rule Modules ([rules/](file:///d:/code/telua_skill/Java_Android/rules/))**:
   * **IPC & Binder Safety:** AIDL `oneway` callbacks, Binder thread pool offloading (<5ms), 1MB buffer limits, `RemoteCallbackList`, `linkToDeath()`, Parcelable field ordering, permission checks, `clearCallingIdentity`.
   * **Threading & Resilience:** UI thread safety, ANR prevention, `ExecutorService` lifecycle shutdown, API latency timeout wrappers.
-  * **Architecture & Hygiene:** Clean Code separation (DTO vs Service), Constructor DI, 35-line method limits, Builder pattern for $\le 3$ params, defensive null safety, logger encapsulation (`AppLogger`).
+  * **Architecture & Hygiene:** Clean Code separation (DTO vs Service), Constructor DI, 35-line method limits, Builder pattern for $\le 3$ params, non-destructive AI code preservation (`ai_preservation_rule.md`), logger encapsulation (`AppLogger`).
   * **Static Analysis:** Android Lint (`./gradlew lintDebug`), Checkstyle, and PMD quality gates.
 
-* 💻 **13 Benchmark Reference Templates ([examples/](file:///d:/code/telua_skill/Java_Android/examples/))**:
+* 💻 **14 Benchmark Reference Templates ([examples/](file:///d:/code/telua_skill/Java_Android/examples/))**:
   * Gold-standard code benchmarks for Producer-Consumer bounded queues, `CarServiceConnection`, Observer-Strategy-Factory architecture, CarProperty subscriptions, Repository pattern, and JUnit4/Mockito test suites.
 
 ---
@@ -61,7 +61,7 @@ Whenever performing code generation, refactoring, code review, or debugging with
 2. **Consult Rule Manifest:** Check matching rules in [Java_Android/rules/](file:///d:/code/telua_skill/Java_Android/rules/) or compiler skills in [C++/](file:///d:/code/telua_skill/C++/README.md).
 3. **Align with Benchmark Code:** Cross-reference structural patterns against [Java_Android/examples/](file:///d:/code/telua_skill/Java_Android/examples/).
 4. **Enforce Engineering Tenets:**
-   * 🧹 **Boy Scout Rule:** Leave modified files cleaner than found.
+   * 🧹 **Controlled Boy Scout Rule:** Apply clean code rules to newly added code. Refactor existing legacy code ONLY upon explicit user request ([ai_preservation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ai_preservation_rule.md)).
    * 🔍 **Root Cause Analysis:** Never mask symptoms or swallow exceptions silently.
    * 🧪 **Verification:** Run unit tests and static analysis verification commands before completing tasks.
 
