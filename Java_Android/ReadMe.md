@@ -30,6 +30,50 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 13 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 23 mandatory engineering quality & safety rule modules.
 
+### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
+
+To ensure seamless collaboration between human engineers and AI agents, the codebase strictly separates responsibilities across these three core documentation directories:
+
+| Directory | Primary Focus | Key Question Answered | Target Audience | Core Artifacts & Contents |
+| :--- | :--- | :--- | :--- | :--- |
+| 📋 **`requirements/`** | **Business & Product Logic** | *"WHAT needs to be built?"* | Product Owners, BAs, QA, Developers, AI Agents | Functional Requirements (FR), User Stories, BDD Acceptance Criteria (Given-When-Then), Edge Cases & Boundary Conditions. |
+| 📐 **`design/`** | **System Architecture & Modeling** | *"HOW will it be engineered?"* | Solution Architects, Tech Leads, Developers, AI Agents | Architectural Blueprints (MVVM, Clean Arch, Repository), Mermaid Class Diagrams, Async Sequence Flows, Data Models & DTO Contracts. |
+| 📁 **`docs/`** | **Integration Knowledge & Safety Registry** | *"HOW was this SDK integrated & WHAT are the risks?"* | Maintenance Engineers, Developers, AI Agents | Package imports, `build.gradle` / `Android.bp` dependencies, Canonical Usage Patterns, ANR & Memory Leak Risk Prevention (No Re-Scanning). |
+
+#### 1. 📋 `requirements/` (Product & Business Specifications)
+* **Role:** Defines the functional scope and business objectives of a feature before any code is written.
+* **Answers:** *"What business problem are we solving? What are the inputs, expected outputs, and error handling rules from a user/system perspective?"*
+* **Rule:** Must be consulted first by AI agents to understand feature goals and acceptance criteria.
+
+#### 2. 📐 `design/` (Technical Architecture & Component Specifications)
+* **Role:** Translates business requirements into concrete software architecture, component relationships, and execution flows.
+* **Answers:** *"How are classes structured? How do components interact asynchronously across background and UI threads?"*
+* **Rule:** Provides the architectural blueprint (Mermaid diagrams) that guides class creation and pattern selection (e.g., Observer + Strategy + Factory).
+
+#### 3. 📁 `docs/` (Integration Knowledge & Risk Prevention Registry)
+* **Role:** Serves as a persistent memory bank for external SDKs, system libraries, and hardware bindings integrated into the project.
+* **Answers:** *"What dependencies were added? What package imports are required? What are the known ANR, threading, or permission risks?"*
+* **Rule:** Eliminates redundant codebase scanning (**Prevent Re-Scanning Rule**). AI agents consult `docs/` directly to reuse pre-documented SDK usage patterns and safety guardrails.
+
+#### 📊 Side-by-Side Comparison & Development Lifecycle Alignment
+
+| Comparison Dimension | 📋 `requirements/` | 📐 `design/` | 📁 `docs/` |
+| :--- | :--- | :--- | :--- |
+| **Primary Domain** | **Business & Product Scope** | **Technical & Architectural Blueprint** | **Integration & Dependency Registry** |
+| **Key Question Answered** | *"WHAT needs to be built & WHY?"* | *"HOW will components be architected?"* | *"HOW is this SDK consumed safely & WHAT are the risks?"* |
+| **Development Phase** | Phase 1: Specification | Phase 2: Architecture & Design | Phase 3+: Integration & Maintenance |
+| **Target Audience** | PO, BA, QA, Developers, AI | Architects, Tech Leads, Developers, AI | Maintenance Engineers, Developers, AI |
+| **Core Artifact Types** | User Stories, BDD Criteria (`Given-When-Then`), Edge Cases | Mermaid Class Diagrams, Sequence Flows, DTO Contracts | Java Imports, `build.gradle`/`Android.bp` snippets, ANR/Leak Guardrails |
+| **Primary Goal** | Align feature goals & avoid requirement ambiguity | Enforce clean architectural patterns & thread safety | Eliminate redundant full-codebase scanning (**No Re-Scanning**) |
+
+```mermaid
+flowchart LR
+    A["📋 Phase 1: requirements/<br/>(WHAT to build)"] --> B["📐 Phase 2: design/<br/>(HOW to architect)"]
+    B --> C["📁 Phase 3: docs/ & rules/<br/>(Check SDKs & Rules)"]
+    C --> D["💻 Phase 4: examples/<br/>(Benchmark Templates)"]
+    D --> E["⚙️ Phase 5: Code & Unit Tests<br/>(JUnit4 + Lint Verification)"]
+```
+
 ---
 
 ## 📚 Master Index of Rule Modules (`rules/`)
