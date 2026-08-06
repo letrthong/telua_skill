@@ -69,11 +69,36 @@ SOURCE_DIR="$ANDROID_TOP/$SOURCE_CODE_RELATIVE_PATH"
 DIR_OUT="$ANDROID_TOP/$APK_OUTPUT_RELATIVE_PATH"
 APK_OUT="$DIR_OUT/$APK_FILE_NAME"
 
+
 echo "ROOT_DIR: $ROOT_DIR"
 echo "ANDROID_TOP: $ANDROID_TOP"
 
 # 6. Clean up old build outputs and start building
 rm -rfv "$DIR_OUT"
+
+cd "$ANDROID_TOP"
+echo "ANDROID_TOP= $ANDROID_TOP"
+if [[ -n "$TARGET_PRODUCT" && -n "$TARGET_BUILD_VARIANT" ]]; then
+    # If both variables exist, print a success log and their values
+    echo "Environment is ready!"
+    echo "TARGET_PRODUCT = $TARGET_PRODUCT"
+    echo "TARGET_BUILD_VARIANT = $TARGET_BUILD_VARIANT"
+else
+    source build/envsetup.sh
+    echo "Log: Running lunch with target: ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
+    lunch "${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
+
+    if [[ -n "$TARGET_PRODUCT" && -n "$TARGET_BUILD_VARIANT" ]]; then
+        # If both variables exist, print a success log and their values
+        echo "Environment is ready!"
+        echo "TARGET_PRODUCT = $TARGET_PRODUCT"
+        echo "TARGET_BUILD_VARIANT = $TARGET_BUILD_VARIANT"
+    else
+        echo "Error: Environment variables do not exist."
+        return 1 2>/dev/null || exit 1
+    fi
+fi
+ 
 
 # 7. Navigate to the source code directory and print the current path before building
 echo "Navigating to source directory: $SOURCE_DIR"
