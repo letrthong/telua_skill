@@ -5,17 +5,6 @@
   Licensed under the Apache License, Version 2.0
 -->
 
-# Business Requirements & Specifications Guide (`requirements/`)
-
-This directory contains functional specifications, business logic rules, user stories, and acceptance criteria for feature development within the `Java_Android` project.
-
----
-
-## 📋 Standard Feature Requirement Template ([template.md](file:///d:/code/telua_skill/Java_Android/requirements/template.md))
-
-Whenever defining a new feature requirement, copy **[template.md](file:///d:/code/telua_skill/Java_Android/requirements/template.md)** to create a new markdown file inside `requirements/` (e.g., `requirements/user_authentication.md`):
-
-```markdown
 # Feature Requirement Specification: [Feature Name]
 
 ## 1. Business Objective & Context
@@ -40,4 +29,3 @@ Whenever defining a new feature requirement, copy **[template.md](file:///d:/cod
 ## 4. Edge Cases & Boundary Conditions
 * **Case 1:** User rapidly clicks submit button multiple times -> Handled by debouncing or idempotent init state.
 * **Case 2:** Low memory / Activity recreation -> Handled by state preservation.
-```

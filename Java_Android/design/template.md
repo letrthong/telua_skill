@@ -5,17 +5,6 @@
   Licensed under the Apache License, Version 2.0
 -->
 
-# Architectural Design & System Modeling Guide (`design/`)
-
-This directory contains system design documents, architectural blueprints, Mermaid class diagrams, sequence flows, and API specs for `Java_Android` features.
-
----
-
-## 📐 Standard System Design Template ([template.md](file:///d:/code/telua_skill/Java_Android/design/template.md))
-
-Whenever designing a new feature or refactoring architecture, copy **[template.md](file:///d:/code/telua_skill/Java_Android/design/template.md)** to create a new markdown file inside `design/` (e.g., `design/user_authentication_design.md`):
-
-```markdown
 # System Architecture Design: [Feature Name]
 
 ## 1. High-Level Architectural Overview
@@ -57,4 +46,3 @@ Defensive method signatures, parameter limits ($\le 3$), return types (`Optional
 
 ## 5. Threading & Resilience Strategy
 Background thread execution details, ANR prevention guards, timeout boundaries (3-5s), and resource cleanup lifecycle.
-```
