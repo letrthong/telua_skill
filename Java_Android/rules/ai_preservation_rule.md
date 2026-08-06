@@ -64,13 +64,10 @@ Whenever completing a coding task, feature addition, or bug fix, the AI **MUST**
    * 🧪 **Verification Results:** Results of unit test and static analysis execution (`./gradlew lintDebug`).
 
 ### Rule 1.9: Configurable Verification Checklist & Flag Gating
-The AI **MUST** inspect [verification_config.json](file:///d:/code/telua_skill/Java_Android/scripts/verification_config.json) before executing verification tasks:
-* **Flag == `true`:** The AI **MUST** execute the corresponding script/command and include its pass/fail log in the completion report.
-  * `run_unit_tests: true` -> Execute `./gradlew testDebugUnitTest`
-  * `run_lint_check: true` -> Execute `./gradlew lintDebug`
-  * `run_clean_whitespace: true` -> Execute `python Java_Android/scripts/clean_java.py`
-  * `run_build_apk: true` -> Execute `./Java_Android/scripts/build_apk.sh`
-* **Flag == `false`:** The AI **SKIPS** that specific verification step cleanly and marks it as `[SKIPPED (Disabled in Config)]` in the completion report, saving execution time for quick drafts or offline environments.
+The AI **MUST** inspect the `verification_steps` array inside [verification_config.json](file:///d:/code/telua_skill/Java_Android/scripts/verification_config.json) before executing verification tasks:
+* The AI **MUST** iterate through the `verification_steps` array sequentially from top to bottom.
+* **If `enabled: true`:** The AI **MUST** execute the step's `command` and log its pass/fail status in the completion report.
+* **If `enabled: false`:** The AI **SKIPS** that step cleanly and marks it as `[SKIPPED (Disabled in Config)]` in the completion report, saving execution time for quick drafts or offline environments.
 
 ---
 
