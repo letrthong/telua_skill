@@ -1,15 +1,33 @@
 {
   "project_name": "telua_skill Java_Android Workspace",
-  "verification_flags": {
-    "run_unit_tests": true,
-    "run_lint_check": true,
-    "run_clean_whitespace": true,
-    "run_build_apk": false
-  },
-  "verification_commands": {
-    "unit_tests_cmd": "./gradlew testDebugUnitTest",
-    "lint_check_cmd": "./gradlew lintDebug",
-    "clean_whitespace_cmd": "python Java_Android/scripts/clean_java.py",
-    "build_apk_cmd": "./Java_Android/scripts/build_apk.sh"
-  }
+  "verification_steps": [
+    {
+      "id": "clean_whitespace",
+      "name": "Clean Code Whitespace",
+      "enabled": true,
+      "command": "python Java_Android/scripts/clean_java.py",
+      "description": "Strip trailing whitespace from all .java source files"
+    },
+    {
+      "id": "unit_tests",
+      "name": "Run JUnit & Mockito Unit Tests",
+      "enabled": true,
+      "command": "./gradlew testDebugUnitTest",
+      "description": "Execute automated unit test suites"
+    },
+    {
+      "id": "lint_check",
+      "name": "Android Lint & Static Analysis",
+      "enabled": true,
+      "command": "./gradlew lintDebug",
+      "description": "Verify zero static analysis errors"
+    },
+    {
+      "id": "build_apk",
+      "name": "Build APK Binary",
+      "enabled": false,
+      "command": "./Java_Android/scripts/build_apk.sh",
+      "description": "Compile and package application APK binary"
+    }
+  ]
 }
