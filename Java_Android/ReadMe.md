@@ -6,13 +6,17 @@ This file serves as the primary system directive and master index manifest for A
 
 ## 🚨 AI System Directive & Execution Workflow
 
-Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this 5-step execution workflow:
+Whenever generating, reviewing, or refactoring Java/Android code in this workspace, the AI **MUST** follow this mandatory 6-step execution workflow:
 
-1. **Read Requirements (`requirements/`):** Understand business specifications, user stories, and acceptance criteria.
-2. **Review System Design (`design/`):** Inspect class diagrams, sequence flows, and component architecture.
-3. **Load Rules & Directives (`rules/`):** Load all 24 rule modules from the `rules/` directory (including non-destructive AI code preservation directives).
-4. **Benchmark against Templates (`examples/`):** Use the reference code templates in `examples/` as structural and stylistic benchmarks.
-5. **Generate Code & Unit Tests:** Produce clean, defensive Java code along with a matching JUnit/Mockito unit test class (`MyClassTest.java`), pass Android Lint (`./gradlew lintDebug`), and update integration notes inside **`docs/`**.
+1. **Read Requirements (`requirements/`):** Parse business specifications, user stories, and BDD acceptance criteria.
+2. **Review System Design (`design/`):** Inspect component class diagrams, sequence flows, and API specifications.
+3. **Load Rules & Benchmarks (`rules/` & `examples/`):** Cross-reference active rule modules in `rules/` (including non-destructive AI code preservation directives) and reference templates in `examples/`.
+4. **Generate Code Non-Destructively:** Produce clean, defensive Java code. Apply an additive-first policy, leaving existing working code 100% untouched unless explicit refactoring is commanded ([ai_preservation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ai_preservation_rule.md)).
+5. **Generate & Run Unit Tests:** Produce matching JUnit4/Mockito unit test suites (`MyClassTest.java`), execute verification (`./gradlew testDebugUnitTest`), and verify zero static analysis errors (`./gradlew lintDebug`).
+6. **Produce Completion Report & Update Registry (`docs/`):** Document new SDK/library dependencies in `docs/` and summarize the completed work with a structured completion report detailing:
+   * 📝 **Changes Made:** Summary of created or updated files.
+   * 🛡️ **Rules Enforced:** Key rules applied (e.g., naming, thread safety, non-destructive editing).
+   * 🧪 **Verification Results:** Output of unit tests and static analysis commands.
 
 > [!NOTE]
 > **Core Engineering Tenets:**
