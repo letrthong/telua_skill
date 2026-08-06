@@ -11,33 +11,15 @@ This directory contains functional specifications, business logic rules, user st
 
 ---
 
-## 📋 Standard Feature Requirement Template ([template.md](file:///d:/code/telua_skill/Java_Android/requirements/template.md))
+## 📋 Usage & Workflow
 
-Whenever defining a new feature requirement, copy **[template.md](file:///d:/code/telua_skill/Java_Android/requirements/template.md)** to create a new markdown file inside `requirements/` (e.g., `requirements/user_authentication.md`):
+1. **Copy Template:** Whenever defining a new feature requirement, copy **[template.md](file:///d:/code/telua_skill/Java_Android/requirements/template.md)** to create a new markdown file inside `requirements/` (e.g., `requirements/user_authentication.md`).
+2. **Define Objectives:** Write high-level goals, target users, and functional requirements (`FR-101`, `FR-102`).
+3. **Use BDD Format:** Structure User Stories using **Given-When-Then** acceptance criteria scenarios.
+4. **Specify Edge Cases:** Document debouncing, offline timeout fallbacks, and memory boundary conditions.
 
-```markdown
-# Feature Requirement Specification: [Feature Name]
+---
 
-## 1. Business Objective & Context
-* **Goal:** High-level summary of what this feature accomplishes.
-* **Target Users:** Primary users or system components interacting with this feature.
+## 📚 Standard Files & Benchmark References
 
-## 2. Functional Requirements
-* **FR-101:** [Detailed description of requirement 1]
-* **FR-102:** [Detailed description of requirement 2]
-
-## 3. User Stories & Acceptance Criteria (BDD Format)
-* **Scenario 1: Successful Execution**
-  * **Given** [Initial system state / prerequisites]
-  * **When** [User triggers action / Event occurs]
-  * **Then** [System state updates / UI displays expected result]
-
-* **Scenario 2: Network / Timeout Failure**
-  * **Given** Network is slow or disconnected
-  * **When** User submits request
-  * **Then** System waits max 5 seconds, cancels task, and displays offline fallback message
-
-## 4. Edge Cases & Boundary Conditions
-* **Case 1:** User rapidly clicks submit button multiple times -> Handled by debouncing or idempotent init state.
-* **Case 2:** Low memory / Activity recreation -> Handled by state preservation.
-```
+* 📄 **[template.md](file:///d:/code/telua_skill/Java_Android/requirements/template.md)**: Blank standard template for business feature requirements.

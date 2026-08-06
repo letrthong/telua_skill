@@ -7,54 +7,19 @@
 
 # Architectural Design & System Modeling Guide (`design/`)
 
-This directory contains system design documents, architectural blueprints, Mermaid class diagrams, sequence flows, and API specs for `Java_Android` features.
+This directory contains system design documents, architectural blueprints, Mermaid class diagrams, sequence flows, and API specifications for `Java_Android` features.
 
 ---
 
-## 📐 Standard System Design Template ([template.md](file:///d:/code/telua_skill/Java_Android/design/template.md))
+## 📐 Usage & Workflow
 
-Whenever designing a new feature or refactoring architecture, copy **[template.md](file:///d:/code/telua_skill/Java_Android/design/template.md)** to create a new markdown file inside `design/` (e.g., `design/user_authentication_design.md`):
+1. **Copy Template:** Whenever designing a new feature or refactoring architecture, copy **[template.md](file:///d:/code/telua_skill/Java_Android/design/template.md)** to create a new spec file inside `design/` (e.g., `design/user_authentication_design.md`).
+2. **Include Diagrams:** Use Mermaid syntax for Class Diagrams and Asynchronous Sequence Flows.
+3. **Define API Contracts:** Specify defensive method signatures, parameter limits ($\le 3$), and exception propagation.
+4. **Threading & Resilience:** Detail background thread offloading, timeout boundaries (3-5s), and lifecycle cleanup.
 
-```markdown
-# System Architecture Design: [Feature Name]
+---
 
-## 1. High-Level Architectural Overview
-Explanation of the design pattern used (e.g., Clean Architecture, MVVM, Repository Pattern, Strategy + Observer).
+## 📚 Standard Files & Benchmark References
 
-## 2. Component Class Diagram (Mermaid)
-```mermaid
-classDiagram
-    class UserViewModel {
-        -UserRepository mRepository
-        +fetchUserData(userId)
-    }
-    class UserRepository {
-        <<interface>>
-        +getUserById(userId) Optional~User~
-    }
-    class UserRepositoryImpl {
-        -UserRemoteDataSource mRemoteDataSource
-        +getUserById(userId) Optional~User~
-    }
-    UserViewModel --> UserRepository
-    UserRepository <|.. UserRepositoryImpl
-```
-
-## 3. Asynchronous Sequence Flow (Mermaid)
-```mermaid
-sequenceDiagram
-    participant UI as Activity/Fragment
-    participant VM as UserViewModel
-    participant REPO as UserRepository
-    UI->>VM: fetchUserData(101)
-    VM->>REPO: getUserById(101)
-    REPO-->>VM: Optional<User>
-    VM-->>UI: LiveData<UserUIState>
-```
-
-## 4. API Contract & Component Interfaces
-Defensive method signatures, parameter limits ($\le 3$), return types (`Optional<T>`, `LiveData<T>`), and Exception propagation strategy.
-
-## 5. Threading & Resilience Strategy
-Background thread execution details, ANR prevention guards, timeout boundaries (3-5s), and resource cleanup lifecycle.
-```
+* 📄 **[template.md](file:///d:/code/telua_skill/Java_Android/design/template.md)**: Blank standard template for system architecture design documents.
