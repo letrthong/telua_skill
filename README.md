@@ -15,7 +15,7 @@ telua_skill/
 │   ├── requirements/          # Business requirements & acceptance criteria
 │   ├── design/                # Class diagrams & component architecture
 │   ├── docs/                  # Integrated SDK & dependency risk registry
-│   └── tools/                 # Build scripts & MCP integration configurations
+│   └── scripts/               # Build scripts & MCP integration configurations
 └── ⚙️ C++/                    # C/C++ Compiler Warning Remediation Skill Suite
     ├── README.md              # Index of C/C++ warning fix skills
     └── *.skill                # 6 GCC/Clang warning remediation directives
