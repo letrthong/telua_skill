@@ -5,8 +5,8 @@
       "id": "clean_whitespace",
       "name": "Clean Code Whitespace",
       "enabled": true,
-      "command": "python Java_Android/scripts/clean_java.py",
-      "description": "Strip trailing whitespace from all .java source files"
+      "command": "python Java_Android/scripts/clean_java.py --diff",
+      "description": "Strip trailing whitespace from Git modified .java source files"
     },
     {
       "id": "unit_tests",
