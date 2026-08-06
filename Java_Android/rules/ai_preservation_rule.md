@@ -51,6 +51,27 @@ When the user explicitly commands a code refactoring task on a module that has e
    * **CORRECT ACTION:** If an existing unit test fails post-refactoring, it proves the refactored code broke a behavioral contract. The AI **MUST** fix the refactored source code to satisfy the existing test, NOT alter the test.
 4. **New Unit Tests for Extracted Helper Classes:** If refactoring extracts new helper classes or interfaces, the AI **MUST** generate new matching unit test suites ([unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)) for the extracted components while keeping existing test suites intact.
 
+### Rule 1.8: Mandatory End-to-End Execution & Completion Reporting Workflow
+Whenever completing a coding task, feature addition, or bug fix, the AI **MUST** execute and document the following 6-step cycle:
+1. **Read Requirements:** Parse feature requirements and acceptance criteria in `requirements/`.
+2. **Check Rules & Templates:** Cross-reference active rules in `rules/` and benchmark code in `examples/`.
+3. **Additive Code Generation:** Apply non-destructive edits, preserving legacy code 100% untouched unless explicit refactoring is requested.
+4. **Unit Test Generation & Execution:** Generate matching JUnit4/Mockito test cases (`MyClassTest.java`) and run test verification (`./gradlew testDebugUnitTest`).
+5. **Update Knowledge Registry:** Document new SDK or library dependencies inside `docs/`.
+6. **Produce Completion Report:** Provide a concise, structured completion report detailing:
+   * 📝 **Changes Made:** Summary of created or updated files.
+   * 🛡️ **Rules Enforced:** Key rules applied (e.g., non-destructive editing, thread safety, null safety).
+   * 🧪 **Verification Results:** Results of unit test and static analysis execution (`./gradlew lintDebug`).
+
+### Rule 1.9: Configurable Verification Checklist & Flag Gating
+The AI **MUST** inspect [verification_config.json](file:///d:/code/telua_skill/Java_Android/scripts/verification_config.json) before executing verification tasks:
+* **Flag == `true`:** The AI **MUST** execute the corresponding script/command and include its pass/fail log in the completion report.
+  * `run_unit_tests: true` -> Execute `./gradlew testDebugUnitTest`
+  * `run_lint_check: true` -> Execute `./gradlew lintDebug`
+  * `run_clean_whitespace: true` -> Execute `python Java_Android/scripts/clean_java.py`
+  * `run_build_apk: true` -> Execute `./Java_Android/scripts/build_apk.sh`
+* **Flag == `false`:** The AI **SKIPS** that specific verification step cleanly and marks it as `[SKIPPED (Disabled in Config)]` in the completion report, saving execution time for quick drafts or offline environments.
+
 ---
 
 ## 2. Examples: Correct vs. Incorrect AI Modification Behavior

@@ -1,0 +1,15 @@
+{
+  "project_name": "telua_skill Java_Android Workspace",
+  "verification_flags": {
+    "run_unit_tests": true,
+    "run_lint_check": true,
+    "run_clean_whitespace": true,
+    "run_build_apk": false
+  },
+  "verification_commands": {
+    "unit_tests_cmd": "./gradlew testDebugUnitTest",
+    "lint_check_cmd": "./gradlew lintDebug",
+    "clean_whitespace_cmd": "python Java_Android/scripts/clean_java.py",
+    "build_apk_cmd": "./Java_Android/scripts/build_apk.sh"
+  }
+}
