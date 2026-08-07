@@ -5,3 +5,5 @@ https://github.com/jnguyen095/clean-code/blob/master/Clean.Code.A.Handbook.of.Ag
 https://github.com/agentscope-ai/agentscope-java/blob/main/SKILL.md
 
 https://code.claude.com/docs/en/skills
+
+https://github.com/jmanhype/speckit
