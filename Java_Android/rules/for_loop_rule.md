@@ -63,9 +63,71 @@ IntStream.range(0, users.size())
 
 ---
 
-## 3. AI Self-Correction & Verification Checklist
+## 3. Mandatory Braces for Control Flow Statements (if / else / for / while)
 
-Before emitting any Java code containing loops, the AI must verify:
+### Rule 3.1: Always Use Explicit Braces — No Single-Line `if` Statements
+
+**Never** write single-line `if` statements without braces. **Always** use explicit `{}` braces for all control flow statements (`if`, `else if`, `else`, `for`, `while`, `do`).
+
+**Why This Matters:**
+1. **Merge Safety:** Single-line `if` statements are extremely fragile during code merges. A merge can easily insert a line between the `if` condition and the intended body, silently breaking the logic — the new line executes unconditionally while the original statement remains gated.
+2. **Readability:** Explicit braces clearly delimit the scope of the condition.
+3. **Bug Prevention:** Prevents accidental addition of statements that appear to be inside the `if` block but are actually outside it.
+
+### ❌ ANTI-PATTERN (Strictly Banned):
+
+```java
+// Bad 1: Single-line if without braces — fragile during merge
+if (event == null) return;
+
+// Bad 2: Single-line if-else without braces
+if (isActive) doSomething();
+else doOtherThing();
+
+// Bad 3: Single-line for without braces
+for (Item item : items) process(item);
+
+// Bad 4: Merge can silently break logic
+// Before merge:
+if (config.enabled) startService();
+// After merge (another branch adds a line):
+if (config.enabled) log("starting");  // ← only this line is gated!
+startService();                        // ← now runs unconditionally!
+```
+
+### ✅ REQUIRED BEST PRACTICE:
+
+```java
+// Correct: Explicit braces — merge-safe and readable
+if (event == null) {
+    return;
+}
+
+// Correct: Braces for if-else
+if (isActive) {
+    doSomething();
+} else {
+    doOtherThing();
+}
+
+// Correct: Braces for for-each
+for (Item item : items) {
+    process(item);
+}
+
+// Correct: Merge-safe — added lines stay inside the block
+if (config.enabled) {
+    log("starting");
+    startService();
+}
+```
+
+---
+
+## 4. AI Self-Correction & Verification Checklist
+
+Before emitting any Java code containing loops or control flow, the AI must verify:
 1. [ ] Did I avoid writing `for (int i = 0; i < ...)` loops?
 2. [ ] Is the iteration written using an enhanced for-each loop `for (Item item : list)` or Java Streams?
-3. [ ] Are all comments written in professional English?
+3. [ ] Are **all** `if`, `else`, `for`, `while` statements using explicit `{}` braces? (No single-line bodies!)
+4. [ ] Are all comments written in professional English?
