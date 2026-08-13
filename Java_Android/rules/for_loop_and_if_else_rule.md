@@ -5,7 +5,7 @@
   Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 -->
 
-# For-Loop Best Practice & Iteration Rules (for_loop_rule.md)
+# For-Loop Best Practice & Iteration Rules (for_loop_and_if_else_rule.md)
 
 This document defines mandatory coding standards and refactoring rules when iterating over collections, arrays, and lists in Java/Android.
 
