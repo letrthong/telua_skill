@@ -84,52 +84,82 @@ def monitor_log(lnk_filename, keywords):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     lnk_path = os.path.join(current_dir, lnk_filename)
 
-    if not os.path.exists(lnk_path):
-        print(f"\033[31m[LỖI] Không tìm thấy {lnk_filename}. Hãy chạy logcat.bat trước.\033[0m")
-        return
+    keywords_lower = [kw.lower() for kw in keywords]
 
-    log_path = get_target_from_lnk(lnk_path)
-    if not log_path or not os.path.exists(log_path):
-        print(f"\033[31m[LỖI] File log gốc không tồn tại: {log_path}\033[0m")
-        return
-
-    # Tạo đường dẫn cho file filter: thêm tiền tố "filter_" vào tên file gốc
-    log_dir = os.path.dirname(log_path)
-    log_basename = os.path.basename(log_path)
-    filter_log_path = os.path.join(log_dir, f"filter_{log_basename}")
-
+    # Chờ cho đến khi latest_log.lnk xuất hiện (logcat.bat chưa chạy hoặc chưa tạo link)
     print("=" * 60)
-    print(f" Đang đọc file gốc:   \033[36m{log_basename}\033[0m")
-    print(f" Đang ghi file filter: \033[32m{os.path.basename(filter_log_path)}\033[0m")
     print(f" Từ khóa bộ lọc:     \033[33m{keywords}\033[0m")
+    print(" Đang chờ logcat.bat tạo latest_log.lnk ...")
     print(" Nhấn Ctrl+C để dừng.")
     print("=" * 60)
 
-    keywords_lower = [kw.lower() for kw in keywords]
+    while not os.path.exists(lnk_path):
+        time.sleep(1)
+
+    print(f"\033[32m[OK] Đã tìm thấy {lnk_filename}.\033[0m")
+
+    def open_current_log():
+        """Giải mã .lnk, mở file log gốc và file filter tương ứng."""
+        log_path = get_target_from_lnk(lnk_path)
+        if not log_path or not os.path.exists(log_path):
+            return None, None, None
+
+        log_dir = os.path.dirname(log_path)
+        log_basename = os.path.basename(log_path)
+        filter_log_path = os.path.join(log_dir, f"filter_{log_basename}")
+
+        # Mở với quyền chia sẻ đọc để tránh lỗi sharing violation khi logcat.bat đang ghi
+        f_in = open(log_path, 'r', encoding='utf-8', errors='ignore')
+        f_out = open(filter_log_path, 'a', encoding='utf-8')
+        return log_path, f_in, f_out
 
     try:
-        # Mở song song 2 file: đọc file log gốc ('r') và ghi nối tiếp vào file filter ('a')
-        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f_in, \
-             open(filter_log_path, 'a', encoding='utf-8') as f_out:
-            
-            # 1. Quét nội dung hiện có
-            for line in f_in:
-                if any(kw in line.lower() for kw in keywords_lower):
-                    print(colorize_line(line))
-                    f_out.write(line)
-            f_out.flush() # Đẩy dữ liệu từ buffer xuống thẳng ổ cứng
-            
-            # 2. Vòng lặp chờ log mới (Real-time monitoring)
-            while True:
-                line = f_in.readline()
-                if not line:
-                    time.sleep(0.5) 
-                    continue
-                
-                if any(kw in line.lower() for kw in keywords_lower):
-                    print(colorize_line(line))
-                    f_out.write(line)
-                    f_out.flush() # Ghi ngay lập tức mỗi khi có lỗi mới
+        log_path, f_in, f_out = open_current_log()
+        if not f_in:
+            print(f"\033[31m[LỖI] Không tìm thấy file log. Hãy chạy logcat.bat trước.\033[0m")
+            return
+
+        print(f" Đang đọc file gốc:   \033[36m{os.path.basename(log_path)}\033[0m")
+        print(f" Đang ghi file filter: \033[32m{os.path.basename(f_out.name)}\033[0m")
+
+        # 1. Quét nội dung hiện có (xử lý cả trường hợp file trống lúc khởi động)
+        for line in f_in:
+            if any(kw in line.lower() for kw in keywords_lower):
+                print(colorize_line(line))
+                f_out.write(line)
+        f_out.flush()
+
+        # 2. Vòng lặp chờ log mới (Real-time monitoring) + tự refresh khi logcat.bat tạo file mới
+        last_check = time.time()
+        while True:
+            # Định kỳ kiểm tra lại .lnk: nếu logcat.bat đã chuyển sang file mới thì mở file mới
+            if time.time() - last_check >= 2:
+                last_check = time.time()
+                new_log_path = get_target_from_lnk(lnk_path)
+                if new_log_path and new_log_path != log_path:
+                    f_in.close()
+                    f_out.close()
+                    log_path, f_in, f_out = open_current_log()
+                    if f_in:
+                        # Xóa terminal để bắt đầu phiên log mới với màn hình sạch
+                        os.system("cls" if os.name == "nt" else "clear")
+                        print(f"\n\033[36m[REFRESH] Chuyển sang file log mới: {os.path.basename(log_path)}\033[0m")
+                        # Quét nội dung đã có của file mới
+                        for line in f_in:
+                            if any(kw in line.lower() for kw in keywords_lower):
+                                print(colorize_line(line))
+                                f_out.write(line)
+                        f_out.flush()
+
+            line = f_in.readline()
+            if not line:
+                time.sleep(0.5)
+                continue
+
+            if any(kw in line.lower() for kw in keywords_lower):
+                print(colorize_line(line))
+                f_out.write(line)
+                f_out.flush()  # Ghi ngay lập tức mỗi khi có lỗi mới
 
     except KeyboardInterrupt:
         print("\n\033[33m[THÔNG BÁO] Đã dừng theo dõi log.\033[0m")
