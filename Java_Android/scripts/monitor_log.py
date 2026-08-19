@@ -122,7 +122,7 @@ def load_filters_from_config(config_filename="filter_logcat.config"):
 def colorize_line(line):
     """Phân tích dòng log và trả về chuỗi đã được bọc mã màu"""
     line_clean = line.strip()
-    match = LOG_PATTERN.search(line_clean)g
+    match = LOG_PATTERN.search(line_clean)
     
     if match:
         level = match.group(1)
