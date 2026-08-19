@@ -40,38 +40,89 @@ def get_target_from_lnk(lnk_path):
         print(f"[LỖI] Không thể đọc file shortcut: {e}")
         return None
 
-def load_keywords_from_config(config_filename="filter.config"):
+def load_filters_from_config(config_filename="filter_logcat.config"):
+    """Đọc filter_logcat.config (JSON) và trả về danh sách nhóm đã lọc.
+
+    Mỗi nhóm chỉ được giữ lại nếu "Enable": true.
+    Trong mỗi nhóm, chỉ giữ các keyword có "Enable": true.
+    Trả về dạng:
+        [
+            {"description": "...", "keywords": ["kw1", "kw2", ...]},
+            ...
+        ]
+    """
+    import json
+
     current_dir = os.path.dirname(os.path.abspath(__file__))
     config_path = os.path.join(current_dir, config_filename)
-    default_keywords = ["crash", "failed", "exception", "fatal"]
+    default_groups = [
+        {"description": "system crash", "keywords": ["crash", "failed", "exception", "fatal"]}
+    ]
 
     if not os.path.exists(config_path):
-        try:
-            with open(config_path, 'w', encoding='utf-8') as f:
-                f.write("# Thêm các từ khóa cần lọc bên dưới, mỗi từ khóa một dòng.\n")
-                f.write("# Hỗ trợ bỏ qua chữ hoa/chữ thường.\n")
-                for kw in default_keywords:
-                    f.write(f"{kw}\n")
-            return default_keywords
-        except Exception:
-            return default_keywords
+        print(f"\033[33m[THÔNG BÁO] Không tìm thấy {config_filename}, dùng từ khóa mặc định.\033[0m")
+        return default_groups
 
-    keywords = []
     try:
         with open(config_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                kw = line.strip()
-                if kw and not kw.startswith("#"):
-                    keywords.append(kw)
-    except Exception:
-        pass
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        print("\033[41m\033[37m" + "=" * 60 + "\033[0m")
+        print("\033[41m\033[37m[LỖI] " + config_filename + " sai định dạng JSON!\033[0m")
+        print(f"\033[31m  Vị trí lỗi: dòng {e.lineno}, cột {e.colno}\033[0m")
+        print(f"\033[31m  Chi tiết:   {e.msg}\033[0m")
+        print("\033[41m\033[37m" + "=" * 60 + "\033[0m")
+        print("\033[33m[THÔNG BÁO] Vui lòng sửa lại file config rồi chạy lại.\033[0m")
+        sys.exit(1)
+    except Exception as e:
+        print(f"\033[31m[LỖI] Không đọc được {config_filename}: {e}\033[0m")
+        print("\033[33m[THÔNG BÁO] Dùng từ khóa mặc định.\033[0m")
+        return default_groups
 
-    return keywords if keywords else default_keywords
+    # Kiểm tra cấu trúc dữ liệu có đúng dạng danh sách nhóm không
+    if not isinstance(data, list):
+        print("\033[41m\033[37m" + "=" * 60 + "\033[0m")
+        print("\033[41m\033[37m[LỖI] " + config_filename + " sai cấu trúc!\033[0m")
+        print("\033[31m  Cấu trúc phải là một mảng (list) các nhóm, ví dụ: [ { ... }, { ... } ]\033[0m")
+        print("\033[41m\033[37m" + "=" * 60 + "\033[0m")
+        sys.exit(1)
+
+    groups = []
+    for idx, group in enumerate(data):
+        # Kiểm tra mỗi nhóm có phải object không
+        if not isinstance(group, dict):
+            print(f"\033[31m[LỖI] Nhóm thứ {idx + 1} không phải object hợp lệ.\033[0m")
+            sys.exit(1)
+
+        # Bỏ qua nhóm bị tắt
+        if not group.get("Enable", True):
+            continue
+
+        description = group.get("Description", "Không tên")
+        keywords = []
+
+        for item in group.get("filters", []):
+            # Hỗ trợ cả 2 dạng: chuỗi đơn hoặc object {keyword, Enable}
+            if isinstance(item, str):
+                kw = item
+                enabled = True
+            else:
+                kw = item.get("keyword", "")
+                enabled = item.get("Enable", True)
+
+            # Chỉ giữ keyword được bật
+            if kw and enabled:
+                keywords.append(kw)
+
+        if keywords:
+            groups.append({"description": description, "keywords": keywords})
+
+    return groups if groups else default_groups
 
 def colorize_line(line):
     """Phân tích dòng log và trả về chuỗi đã được bọc mã màu"""
     line_clean = line.strip()
-    match = LOG_PATTERN.search(line_clean)
+    match = LOG_PATTERN.search(line_clean)g
     
     if match:
         level = match.group(1)
@@ -80,11 +131,42 @@ def colorize_line(line):
     
     return f"\033[35m{line_clean}{COLORS['RESET']}"
 
-def monitor_log(lnk_filename, keywords):
+def compile_keyword_patterns(keywords):
+    """Chuyển danh sách keyword thành danh sách pattern để khớp.
+
+    - Keyword có '*' (wildcard) -> biên dịch thành regex (vd: CAR.AUDIO.*)
+    - Keyword không có '*' -> giữ nguyên chuỗi để khớp nhanh (substring)
+    """
+    patterns = []
+    for kw in keywords:
+        if '*' in kw:
+            # Chuyển wildcard '*' thành regex '.*', escape các ký tự đặc biệt khác
+            regex = re.escape(kw).replace(r'\*', '.*')
+            patterns.append(("regex", re.compile(regex, re.IGNORECASE)))
+        else:
+            patterns.append(("plain", kw.lower()))
+    return patterns
+
+def line_matches(line_lower, patterns):
+    """Kiểm tra dòng log có khớp bất kỳ pattern nào không."""
+    for kind, pat in patterns:
+        if kind == "regex":
+            if pat.search(line_lower):
+                return True
+        else:
+            if pat in line_lower:
+                return True
+    return False
+
+def monitor_log(lnk_filename, groups):
     current_dir = os.path.dirname(os.path.abspath(__file__))
     lnk_path = os.path.join(current_dir, lnk_filename)
 
-    keywords_lower = [kw.lower() for kw in keywords]
+    # Gom tất cả keyword đã được bật (từ các nhóm Enable:true và keyword Enable:true)
+    keywords = []
+    for group in groups:
+        keywords.extend(group["keywords"])
+    patterns = compile_keyword_patterns(keywords)
 
     # Chờ cho đến khi latest_log.lnk xuất hiện (logcat.bat chưa chạy hoặc chưa tạo link)
     print("=" * 60)
@@ -124,7 +206,7 @@ def monitor_log(lnk_filename, keywords):
 
         # 1. Quét nội dung hiện có (xử lý cả trường hợp file trống lúc khởi động)
         for line in f_in:
-            if any(kw in line.lower() for kw in keywords_lower):
+            if line_matches(line.lower(), patterns):
                 print(colorize_line(line))
                 f_out.write(line)
         f_out.flush()
@@ -146,7 +228,7 @@ def monitor_log(lnk_filename, keywords):
                         print(f"\n\033[36m[REFRESH] Chuyển sang file log mới: {os.path.basename(log_path)}\033[0m")
                         # Quét nội dung đã có của file mới
                         for line in f_in:
-                            if any(kw in line.lower() for kw in keywords_lower):
+                            if line_matches(line.lower(), patterns):
                                 print(colorize_line(line))
                                 f_out.write(line)
                         f_out.flush()
@@ -156,7 +238,7 @@ def monitor_log(lnk_filename, keywords):
                 time.sleep(0.5)
                 continue
 
-            if any(kw in line.lower() for kw in keywords_lower):
+            if line_matches(line.lower(), patterns):
                 print(colorize_line(line))
                 f_out.write(line)
                 f_out.flush()  # Ghi ngay lập tức mỗi khi có lỗi mới
@@ -170,5 +252,5 @@ if __name__ == "__main__":
     LNK_FILE = "latest_log.lnk"
     CONFIG_FILE = "filter_logcat.config"
     
-    FILTER_KEYWORDS = load_keywords_from_config(CONFIG_FILE)
-    monitor_log(LNK_FILE, FILTER_KEYWORDS)
+    FILTER_GROUPS = load_filters_from_config(CONFIG_FILE)
+    monitor_log(LNK_FILE, FILTER_GROUPS)
