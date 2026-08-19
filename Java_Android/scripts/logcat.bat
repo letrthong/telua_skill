@@ -68,6 +68,11 @@ if "%~1"=="" (
 :: Create the log filename in the 'logs' folder: logs\log_userID_timestamp.log
 set LOG_FILE=logs\log_!USER_ID!_!TIMESTAMP!.log
 
+:: 3.5 Create a Windows Shortcut (lnk) acting as a soft-link to the current log
+set "ABSOLUTE_LOG_PATH=%cd%\!LOG_FILE!"
+powershell -NoProfile -Command "$wshell = New-Object -ComObject WScript.Shell; $shortcut = $wshell.CreateShortcut('latest_log.lnk'); $shortcut.TargetPath = '!ABSOLUTE_LOG_PATH!'; $shortcut.Save()"
+echo [INFO] Created 'latest_log.lnk' pointing to the current log file.
+
 :: 4. Start logcat stream to file
 echo [3/3] Capturing Logcat logs to NEW file: !LOG_FILE!
 echo Press Ctrl+C to stop recording logs.
