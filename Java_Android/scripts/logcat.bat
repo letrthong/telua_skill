@@ -31,6 +31,12 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
+:: 0c. Create logs directory if it doesn't exist
+if not exist "logs" (
+    mkdir "logs"
+    echo [INFO] Created 'logs' directory for output files.
+)
+
 :: ---------------------------
 
 :CAPTURE_LOOP
@@ -38,6 +44,8 @@ echo.
 :: 1. Wait for device connection via ADB
 echo [1/3] Waiting for ADB device connection...
 adb wait-for-device
+:: Thêm thời gian chờ 2s để các dịch vụ logcat trên điện thoại khởi động hoàn toàn (đặc biệt khi vừa reboot)
+timeout /t 2 /nobreak >nul
 echo [INFO] ADB Device connected successfully!
 
 :: 2. Clear previous logcat buffer
@@ -57,8 +65,8 @@ if "%~1"=="" (
     set USER_ID=%~1
 )
 
-:: Create the log filename: log_userID_timestamp.log
-set LOG_FILE=log_!USER_ID!_!TIMESTAMP!.log
+:: Create the log filename in the 'logs' folder: logs\log_userID_timestamp.log
+set LOG_FILE=logs\log_!USER_ID!_!TIMESTAMP!.log
 
 :: 4. Start logcat stream to file
 echo [3/3] Capturing Logcat logs to NEW file: !LOG_FILE!
