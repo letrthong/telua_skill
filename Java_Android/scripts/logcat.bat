@@ -12,6 +12,27 @@ echo ===================================================
 echo  Android ADB Logcat Capture Tool (Auto-Reconnect)
 echo ===================================================
 
+:: --- PREREQUISITE CHECKS ---
+
+:: 0a. Check if running on Windows
+if not "%OS%"=="Windows_NT" (
+    echo [ERROR] This script is designed to run on Windows operating systems only.
+    pause
+    exit /b 1
+)
+
+:: 0b. Check if ADB is installed and in PATH
+where adb >nul 2>nul
+if %ERRORLEVEL% neq 0 (
+    echo [ERROR] 'adb' command not found!
+    echo [INFO] ADB is either not installed or not added to your system's PATH environment variable.
+    echo [INFO] Please download Android SDK Platform-Tools, extract it, and add the folder to your PATH.
+    pause
+    exit /b 1
+)
+
+:: ---------------------------
+
 :CAPTURE_LOOP
 echo.
 :: 1. Wait for device connection via ADB
@@ -23,17 +44,21 @@ echo [INFO] ADB Device connected successfully!
 echo [2/3] Clearing previous Logcat buffer...
 adb logcat -c
 
-:: 3. Generate timestamp
+:: 3. Generate timestamp and handle UserID
 :: Use PowerShell to guarantee a consistent yyyyMMdd_HHmmss format regardless of region
 for /f %%I in ('powershell -NoProfile -Command "Get-Date -Format 'yyyyMMdd_HHmmss'"') do set TIMESTAMP=%%I
 
-:: Handle filename to prevent overwriting upon reconnection
+:: Set User ID based on the first argument passed to the script or Windows Username
 if "%~1"=="" (
-    set LOG_FILE=logcat_!TIMESTAMP!.log
+    :: Nếu không truyền userID, tự động lấy Username của hệ thống Windows hiện tại
+    set USER_ID=%USERNAME%
 ) else (
-    :: If a custom filename argument is provided, append a timestamp to create a new file each time it drops
-    set LOG_FILE=%~n1_!TIMESTAMP!%~x1
+    :: Nếu có truyền tham số (vd: etr1hc), lấy tham số đó làm userID
+    set USER_ID=%~1
 )
+
+:: Create the log filename: log_userID_timestamp.log
+set LOG_FILE=log_!USER_ID!_!TIMESTAMP!.log
 
 :: 4. Start logcat stream to file
 echo [3/3] Capturing Logcat logs to NEW file: !LOG_FILE!
