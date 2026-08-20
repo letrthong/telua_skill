@@ -117,7 +117,13 @@ def load_filters_from_config(config_filename="filter_logcat.config"):
         if keywords:
             groups.append({"description": description, "keywords": keywords})
 
-    return groups if groups else default_groups
+    if not groups:
+        print("\033[33m[THÔNG BÁO] Không có nhóm nào được bật (Enable: true) trong " + config_filename + ".\033[0m")
+        print("\033[33m[THÔNG BÁO] Đang dùng từ khóa mặc định: " + ", ".join(default_groups[0]["keywords"]) + "\033[0m")
+        print("\033[33m[THÔNG BÁO] Hãy mở " + config_filename + " và đổi 'Enable' thành true cho nhóm bạn muốn lọc.\033[0m")
+        return default_groups
+
+    return groups
 
 def colorize_line(line):
     """Phân tích dòng log và trả về chuỗi đã được bọc mã màu"""
@@ -247,10 +253,66 @@ def monitor_log(lnk_filename, groups):
         print("\n\033[33m[THÔNG BÁO] Đã dừng theo dõi log.\033[0m")
     except Exception as e:
         print(f"\n\033[31m[LỖI] Đã xảy ra lỗi: {e}\033[0m")
+    finally:
+        # Đóng file để tránh rò rỉ handle khi thoát (Ctrl+C hoặc lỗi)
+        try:
+            f_out.close()
+        except Exception:
+            pass
+        try:
+            f_in.close()
+        except Exception:
+            pass
+
+def analyze_log_file(log_path, groups):
+    """Phân tích lại một file log cũ (không theo dõi real-time).
+
+    Đọc toàn bộ file log, lọc theo keyword, in ra màn hình (tô màu)
+    và ghi vào file filter_<tên log>.
+    """
+    if not os.path.exists(log_path):
+        print(f"\033[31m[LỖI] Không tìm thấy file log: {log_path}\033[0m")
+        return
+
+    # Gom tất cả keyword đã được bật
+    keywords = []
+    for group in groups:
+        keywords.extend(group["keywords"])
+    patterns = compile_keyword_patterns(keywords)
+
+    log_dir = os.path.dirname(log_path)
+    log_basename = os.path.basename(log_path)
+    filter_log_path = os.path.join(log_dir, f"filter_{log_basename}")
+
+    print("=" * 60)
+    print(f" Phân tích file log:   \033[36m{log_path}\033[0m")
+    print(f" Từ khóa bộ lọc:       \033[33m{keywords}\033[0m")
+    print(f" Ghi file filter:      \033[32m{filter_log_path}\033[0m")
+    print("=" * 60)
+
+    try:
+        with open(log_path, 'r', encoding='utf-8', errors='ignore') as f_in, \
+             open(filter_log_path, 'w', encoding='utf-8') as f_out:
+            count = 0
+            for line in f_in:
+                if line_matches(line.lower(), patterns):
+                    print(colorize_line(line))
+                    f_out.write(line)
+                    count += 1
+            f_out.flush()
+        print(f"\n\033[32m[OK] Đã phân tích xong. Số dòng khớp: {count}\033[0m")
+    except Exception as e:
+        print(f"\n\033[31m[LỖI] Đã xảy ra lỗi khi phân tích: {e}\033[0m")
 
 if __name__ == "__main__":
     LNK_FILE = "latest_log.lnk"
     CONFIG_FILE = "filter_logcat.config"
-    
+
     FILTER_GROUPS = load_filters_from_config(CONFIG_FILE)
-    monitor_log(LNK_FILE, FILTER_GROUPS)
+
+    # Nếu truyền tham số file path -> phân tích lại file log cũ
+    if len(sys.argv) > 1:
+        analyze_log_file(sys.argv[1], FILTER_GROUPS)
+    else:
+        # Không truyền -> logic hiện tại: theo dõi real-time qua .lnk
+        monitor_log(LNK_FILE, FILTER_GROUPS)
