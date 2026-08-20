@@ -122,7 +122,7 @@ logcat.bat
 Or pass a username to name the file:
 
 ```bat
-logcat.bat etr1hc
+logcat.bat userName
 ```
 
 Result: log is written to `logs\log_<user>_<timestamp>.log`.
@@ -152,7 +152,7 @@ Result:
 You can also pass a **log file path** to `monitor_log.py` to re-analyze an old log file (no real-time monitoring):
 
 ```bat
-python monitor_log.py logs\log_etr1hc_20260820_123456.log
+python monitor_log.py logs\log_username_20260820_123456.log
 ```
 
 Result:
