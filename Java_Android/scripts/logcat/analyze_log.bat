@@ -43,28 +43,7 @@ if %ERRORLEVEL% neq 0 (
     exit /b 1
 )
 
-:: --- USAGE / HELPER ---
-:: If no file path is passed, show usage instructions and exit.
-if "%~1"=="" (
-    echo.
-    echo ===================================================
-    echo  Usage: analyze_log.bat ^<path_to_log_file^>
-    echo ===================================================
-    echo.
-    echo  This tool re-analyzes an OLD log file (no real-time).
-    echo  It filters lines matching the keywords in
-    echo  filter_logcat.config, prints them (colorized) and
-    echo  writes them to filter_^<log name^>.
-    echo.
-    echo  Examples:
-    echo    analyze_log.bat logs\log_etr1hc_20260820_123456.log
-    echo    analyze_log.bat C:\Users\ETR1HC\Downloads\log_2.txt
-    echo.
-    echo  Tip: Drag and drop a log file onto this .bat to analyze it.
-    echo.
-    pause
-    exit /b 0
-)
+ 
 
 :: --- ANALYZE ---
 echo [INFO] Analyzing log file: %~1
