@@ -31,7 +31,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/README.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[scripts/](file:///d:/code/telua_skill/Java_Android/scripts/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 16 gold-standard benchmark reference templates.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 18 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 25 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
@@ -134,6 +134,8 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[UnitTestTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/UnitTestTemplate.java)**: Gold-standard Unit Test benchmark implementing unit_testability_rule.md, Constructor Dependency Injection, JUnit 4 + Mockito stubbing/verification, and AAA pattern.
 * ☕ **[BinderServiceTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/BinderServiceTemplate.java)**: Comprehensive AIDL Binder Service template implementing linkToDeath(), RemoteCallbackList, permission validation, and safe Identity clearing.
 * ☕ **[VolatileLocalCopyTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/VolatileLocalCopyTemplate.java)**: High-performance Volatile + Local Copy (Immutable Snapshot) multithreading pattern guaranteeing visibility, TOCTOU race condition prevention, and idempotent lifecycle.
+* ☕ **[MultiSubscriberConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MultiSubscriberConnectionTemplate.java)**: Push/Observer Re-share architecture solving the Stale Connection Bug across multiple client classes (ClientA, ClientB) via CopyOnWriteArrayList and atomic reconnect broadcast.
+* ☕ **[ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java)**: Provider Indirection & Auto-Reconnect pattern eliminating stale references; consumer classes query connection on-demand via Volatile Local Copy without manual callback re-wiring.
 
 ### 💡 Featured Case Study: AOSP Integration & Rule Alignment (`CarVolumeCallbackHandler`)
 
