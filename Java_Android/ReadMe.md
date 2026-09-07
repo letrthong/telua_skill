@@ -29,10 +29,11 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 
 * 📋 **[requirements/](file:///d:/code/telua_skill/Java_Android/requirements/README.md)**: Business logic, feature requirements, user stories, and acceptance criteria.
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
+* 📌 **[tasks/](file:///d:/code/telua_skill/Java_Android/tasks/CHECKLIST.md)**: Master task progress board (`CHECKLIST.md`), task cards, sprint tracking, and step-by-step progress checklists.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/README.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[scripts/](file:///d:/code/telua_skill/Java_Android/scripts/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
 * 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 19 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 25 mandatory engineering quality & safety rule modules.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 26 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
 
@@ -61,21 +62,22 @@ To ensure seamless collaboration between human engineers and AI agents, the code
 
 #### 📊 Side-by-Side Comparison & Development Lifecycle Alignment
 
-| Comparison Dimension | 📋 `requirements/` | 📐 `design/` | 📁 `docs/` |
-| :--- | :--- | :--- | :--- |
-| **Primary Domain** | **Business & Product Scope** | **Technical & Architectural Blueprint** | **Integration & Dependency Registry** |
-| **Key Question Answered** | *"WHAT needs to be built & WHY?"* | *"HOW will components be architected?"* | *"HOW is this SDK consumed safely & WHAT are the risks?"* |
-| **Development Phase** | Phase 1: Specification | Phase 2: Architecture & Design | Phase 3+: Integration & Maintenance |
-| **Target Audience** | PO, BA, QA, Developers, AI | Architects, Tech Leads, Developers, AI | Maintenance Engineers, Developers, AI |
-| **Core Artifact Types** | User Stories, BDD Criteria (`Given-When-Then`), Edge Cases | Mermaid Class Diagrams, Sequence Flows, DTO Contracts | Java Imports, `build.gradle`/`Android.bp` snippets, ANR/Leak Guardrails |
-| **Primary Goal** | Align feature goals & avoid requirement ambiguity | Enforce clean architectural patterns & thread safety | Eliminate redundant full-codebase scanning (**No Re-Scanning**) |
+| Comparison Dimension | 📋 `requirements/` | 📐 `design/` | 📌 `tasks/` | 📁 `docs/` |
+| :--- | :--- | :--- | :--- | :--- |
+| **Primary Domain** | **Business & Product Scope** | **Technical & Architectural Blueprint** | **Execution Tracking & Milestones** | **Integration & Dependency Registry** |
+| **Key Question Answered** | *"WHAT needs to be built & WHY?"* | *"HOW will components be architected?"* | *"WHERE are we in implementation & WHAT'S next?"* | *"HOW is this SDK consumed safely & WHAT are the risks?"* |
+| **Development Phase** | Phase 1: Specification | Phase 2: Architecture & Design | Phase 3: Task Breakdown & Tracking | Phase 4+: Integration & Maintenance |
+| **Target Audience** | PO, BA, QA, Developers, AI | Architects, Tech Leads, Developers, AI | Project Managers, Developers, AI Agents | Maintenance Engineers, Developers, AI |
+| **Core Artifact Types** | User Stories, BDD Criteria (`Given-When-Then`), Edge Cases | Mermaid Class Diagrams, Sequence Flows, DTO Contracts | Master `CHECKLIST.md`, Task Cards (`TASK_XX_*.md`) | Java Imports, `build.gradle`/`Android.bp` snippets, ANR/Leak Guardrails |
+| **Primary Goal** | Align feature goals & avoid requirement ambiguity | Enforce clean architectural patterns & thread safety | Track step-by-step progress & ensure zero missing tasks | Eliminate redundant full-codebase scanning (**No Re-Scanning**) |
 
 ```mermaid
 flowchart LR
     A["📋 Phase 1: requirements/<br/>(WHAT to build)"] --> B["📐 Phase 2: design/<br/>(HOW to architect)"]
-    B --> C["📁 Phase 3: docs/ & rules/<br/>(Check SDKs & Rules)"]
-    C --> D["💻 Phase 4: examples/<br/>(Benchmark Templates)"]
-    D --> E["⚙️ Phase 5: Code & Unit Tests<br/>(JUnit4 + Lint Verification)"]
+    B --> C["📌 Phase 3: tasks/<br/>(Breakdown & Checklist)"]
+    C --> D["📁 Phase 4: docs/ & rules/<br/>(Check SDKs & Rules)"]
+    D --> E["💻 Phase 5: examples/<br/>(Benchmark Templates)"]
+    E --> F["⚙️ Phase 6: Code & Unit Tests<br/>(JUnit4 + Lint Verification)"]
 ```
 
 ---
@@ -83,6 +85,7 @@ flowchart LR
 ## 📚 Master Index of Rule Modules (`rules/`)
 
 ### 1. Architectural & Structural Rules
+* 📄 **[spec_driven_development_rule.md](file:///d:/code/telua_skill/Java_Android/rules/spec_driven_development_rule.md)**: Spec-Driven Development (SDD) protocol, mandatory 6-phase engineering lifecycle ("No Spec, No Design $\rightarrow$ No Code"), human architectural sign-off, and pre-implementation gatekeeping checklist.
 * 📄 **[design_pattern_architecture_rule.md](file:///d:/code/telua_skill/Java_Android/rules/design_pattern_architecture_rule.md)**: MVC/MVVM separation, Strategy, Observer/Callback, Factory, Dependency Inversion, and `@CallbackExecutor` non-blocking callback protocol.
 * 📄 **[objects_and_data_structures_rule.md](file:///d:/code/telua_skill/Java_Android/rules/objects_and_data_structures_rule.md)**: Strict Clean Code Chapter 6 separation of Data Structures (DTOs/Records) from Behavior Processors/Services and DAOs.
 * 📄 **[encapsulation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/encapsulation_rule.md)**: Strict private member field access, prohibition of public fields, defensive copying.
