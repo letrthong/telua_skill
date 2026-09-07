@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 package com.example.app.examples;
-
-import android.util.Log;
+// Complies with log_rule.md: using AppLogger utility
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,13 +54,13 @@ public class VolatileLocalCopyTemplate<T> {
     public synchronized void init(T initialState) {
         Objects.requireNonNull(initialState, "initialState must not be null");
         if (mIsInitialized.get()) {
-            Log.d(TAG, "Already initialized. Skipping duplicate init() call.");
+            AppLogger.d(TAG, "Already initialized. Skipping duplicate init() call.");
             return;
         }
         // Atomic publish: readers see either the old or the new state, never a torn one.
         mState = initialState;
         mIsInitialized.set(true);
-        Log.d(TAG, "VolatileLocalCopyTemplate initialized.");
+        AppLogger.d(TAG, "VolatileLocalCopyTemplate initialized.");
     }
 
     /**
@@ -115,12 +114,12 @@ public class VolatileLocalCopyTemplate<T> {
      */
     public synchronized void release() {
         if (!mIsInitialized.get()) {
-            Log.d(TAG, "Already released or not initialized. Skipping duplicate release() call.");
+            AppLogger.d(TAG, "Already released or not initialized. Skipping duplicate release() call.");
             return;
         }
         mState = null;
         mIsInitialized.set(false);
-        Log.d(TAG, "VolatileLocalCopyTemplate released.");
+        AppLogger.d(TAG, "VolatileLocalCopyTemplate released.");
     }
 
     /**

@@ -31,8 +31,8 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/README.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[scripts/](file:///d:/code/telua_skill/Java_Android/scripts/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 14 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 24 mandatory engineering quality & safety rule modules.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 16 gold-standard benchmark reference templates.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 25 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
 
@@ -99,6 +99,7 @@ flowchart LR
 * 📄 **[executor_shutdown_rule.md](file:///d:/code/telua_skill/Java_Android/rules/executor_shutdown_rule.md)**: Mandatory shutdown of `Executor` / `ExecutorService` thread pools in lifecycle teardowns.
 * 📄 **[resource_leak_rule.md](file:///d:/code/telua_skill/Java_Android/rules/resource_leak_rule.md)**: `try-with-resources` for `AutoCloseable`, SQLite Cursor closing, symmetric `BroadcastReceiver` unregistering.
 * 📄 **[singleton_thread_safety_rule.md](file:///d:/code/telua_skill/Java_Android/rules/singleton_thread_safety_rule.md)**: Bill Pugh & volatile double-checked locking for thread-safe singletons, `ApplicationContext` usage.
+* 📄 **[thread_safety_concurrency_rule.md](file:///d:/code/telua_skill/Java_Android/rules/thread_safety_concurrency_rule.md)**: Volatile reference local copy snapshot idiom, TOCTOU bug prevention, immutable safe publication, atomic primitives, and Singleton concurrency optimization.
 
 ### 3. Code Hygiene, Null Safety & Quality Rules
 * 📄 **[naming_rule.md](file:///d:/code/telua_skill/Java_Android/rules/naming_rule.md)**: AOSP field prefixes (`m`/`s`), `UPPER_SNAKE_CASE` constants, JLS modifier ordering (`public static final`).
@@ -131,6 +132,8 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[AutomotiveFullArchitectureTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/AutomotiveFullArchitectureTemplate.java)**: Comprehensive Automotive architecture combining Singleton, Repository, Observer, Strategy, and Factory/Adapter patterns into one unified system.
 * ☕ **[AppLogger.java](file:///d:/code/telua_skill/Java_Android/examples/AppLogger.java)**: Production-grade logging utility benchmark implementing log_rule.md standards, internal DEBUG flag encapsulation, varargs string formatting, and legacy 23-character TAG truncation safety.
 * ☕ **[UnitTestTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/UnitTestTemplate.java)**: Gold-standard Unit Test benchmark implementing unit_testability_rule.md, Constructor Dependency Injection, JUnit 4 + Mockito stubbing/verification, and AAA pattern.
+* ☕ **[BinderServiceTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/BinderServiceTemplate.java)**: Comprehensive AIDL Binder Service template implementing linkToDeath(), RemoteCallbackList, permission validation, and safe Identity clearing.
+* ☕ **[VolatileLocalCopyTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/VolatileLocalCopyTemplate.java)**: High-performance Volatile + Local Copy (Immutable Snapshot) multithreading pattern guaranteeing visibility, TOCTOU race condition prevention, and idempotent lifecycle.
 
 ### 💡 Featured Case Study: AOSP Integration & Rule Alignment (`CarVolumeCallbackHandler`)
 
