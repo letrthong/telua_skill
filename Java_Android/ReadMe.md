@@ -31,7 +31,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📐 **[design/](file:///d:/code/telua_skill/Java_Android/design/README.md)**: System architecture design, Mermaid class diagrams, sequence flows, and API specs.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/README.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[scripts/](file:///d:/code/telua_skill/Java_Android/scripts/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 18 gold-standard benchmark reference templates.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 19 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 25 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
@@ -136,6 +136,7 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[MediaPlaybackStateTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MediaPlaybackStateTemplate.java)**: Real-world Media Playback State multithreading benchmark demonstrating Volatile + Local Copy (Immutable Snapshot), TOCTOU NPE race condition prevention, and idempotent lifecycle.
 * ☕ **[MultiSubscriberConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MultiSubscriberConnectionTemplate.java)**: Push/Observer Re-share architecture solving the Stale Connection Bug across multiple client classes (ClientA, ClientB) via CopyOnWriteArrayList and atomic reconnect broadcast.
 * ☕ **[ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java)**: Provider Indirection & Auto-Reconnect pattern eliminating stale references; consumer classes query connection on-demand via Volatile Local Copy without manual callback re-wiring.
+* ☕ **[CarAudioConnectionSharingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarAudioConnectionSharingTemplate.java)**: Production AOSP Car.createCar + CarAudioManager multi-client sharing architecture; manages background offloading, automatic re-sharing to Class A & B upon CarService restart, and VolumeCallback re-registration.
 
 ### 💡 Featured Case Study: AOSP Integration & Rule Alignment (`CarVolumeCallbackHandler`)
 

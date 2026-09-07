@@ -195,11 +195,51 @@ public class StateManager {
 
 ---
 
-## 3. AI Self-Correction & Verification Checklist
+## 3. Real-World Connection Sharing & Stale Connection Prevention
+
+When multiple client classes (e.g., `ClientModuleA`, `ClientModuleB`) must share a single underlying connection resource (e.g. Socket, Bluetooth, MQTT, AOSP `CarService` Binder) that can drop and reconnect, choosing the right concurrency architecture prevents the fatal **Stale Connection Bug** (clients continuing to invoke methods on dead, closed connections).
+
+### Architectural Comparison & Selection Matrix:
+
+| Dimension | Pattern A: Provider Indirection (Pull) 🏆 | Pattern B: Multi-Subscriber Observer (Push) |
+| :--- | :--- | :--- |
+| **Reference Template** | [ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java) | [MultiSubscriberConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MultiSubscriberConnectionTemplate.java) |
+| **Industry Adoption** | **~75% (Recommended Primary)** | **~25% (Domain Specific)** |
+| **Interaction Model** | **Pull on Demand:** Clients call `provider.executeWithConnection(...)`. | **Push Broadcast:** Manager pushes new connection to subscribers. |
+| **Client Complexity** | **Zero Overhead:** Clients never store the raw connection handle. | **Moderate:** Clients must implement listener and manage reference lifecycle. |
+| **Stale Bug Risk** | **0% by Design:** Impossible because clients hold no raw reference. | **Controlled:** Requires clients to nullify references on `onConnectionLost()`. |
+| **Ideal Use Cases** | Request-Response, REST/RPC commands, Database queries, Volume/HVAC control. | Event-Driven pub/sub (MQTT topics), AOSP Binder callback re-registration, UI connection indicators. |
+
+---
+
+### Pattern A: Provider Indirection Pattern (Pull on Demand — Recommended Primary ~75%)
+* **Benchmark:** [ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java)
+* **Core Principle:** Clients (`AudioControllerA`, `HvacControllerB`) **NEVER** hold a direct reference to the raw connection session. Instead, they hold a reference to the `ConnectionProvider` (or Singleton Manager).
+* **Execution Flow:** Every client command queries the active session on-demand:
+  ```java
+  mProvider.executeWithConnection(session -> session.writeMessage("..."));
+  ```
+* **Auto-Recovery:** The Provider uses Rule 1.1 (`volatile` Local Copy) to check connectivity. If dead or failing, the Provider catches the error, marks the session as dead, and triggers background reconnection (`mIsReconnecting.compareAndSet(false, true)`). Once connected, `mActiveSession = newSession` is published atomically. Both clients immediately begin using the new connection on their next call without any callback re-wiring.
+
+---
+
+### Pattern B: Multi-Subscriber Push Re-Share Pattern (Observer — Domain Specific ~25%)
+* **Benchmark:** [MultiSubscriberConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MultiSubscriberConnectionTemplate.java)
+* **Core Principle:** Used when clients **MUST** hold the connection handle directly (e.g., to re-register callbacks on AOSP `CarService` restart, re-subscribe to MQTT topics, or update UI connection badges).
+* **Two-Stage Stale Prevention Lifecycle:**
+  1. **Disconnection Broadcast (`onConnectionLost`):** Manager immediately notifies all registered subscribers in `CopyOnWriteArrayList` to nullify their cached handle (`mCachedConnection = null`), preventing calls to dead sockets.
+  2. **Reconnection Broadcast (`onConnectionRestored`):** Once the background worker successfully reconnects, it broadcasts the fresh connection handle to all subscribers simultaneously.
+* **Strict Concurrency Rule (Rule 1.5):** All subscriber notifications **MUST** be broadcast outside synchronized blocks to prevent deadlocks.
+* **Late Subscriber Support:** If a client registers after the connection is already active, the manager delivers the active connection handle immediately.
+
+---
+
+## 4. AI Self-Correction & Verification Checklist
 
 Before generating or reviewing any multithreaded Java code:
-1. [ ] Is every `volatile` field copied into a local variable (`T local = mField;`) before multi-read or *check-then-act* logic? -> **Must be Yes**.
+1. [ ] Is every `volatile` field copied into a local variable (`T local = mField;`) before multi-read or *check-then-act* logic (as demonstrated in [MediaPlaybackStateTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MediaPlaybackStateTemplate.java))? -> **Must be Yes**.
 2. [ ] Are objects referenced by `volatile` strictly immutable (no in-place mutations)? -> **Must be Yes**.
 3. [ ] If implementing DCL for Singletons, is the local variable copy optimization applied? -> **Must be Yes**.
-4. [ ] Are external listeners, callbacks, or I/O calls executed strictly **outside** `synchronized` blocks? -> **Must be Yes**.
-5. [ ] Are atomic primitives (`AtomicBoolean`, `AtomicInteger`) used for simple flags/counters instead of method-wide locks? -> **Must be Yes**.
+4. [ ] For shared connections across multiple classes, is **Provider Indirection** ([ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java)) preferred unless explicit callback re-registration or UI state observation is required ([MultiSubscriberConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MultiSubscriberConnectionTemplate.java))? -> **Must be Yes**.
+5. [ ] Are external listeners, callbacks, or I/O calls executed strictly **outside** `synchronized` blocks? -> **Must be Yes**.
+6. [ ] Are atomic primitives (`AtomicBoolean`, `AtomicInteger`) used for simple flags/counters instead of method-wide locks? -> **Must be Yes**.
