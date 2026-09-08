@@ -7,3 +7,6 @@ https://github.com/agentscope-ai/agentscope-java/blob/main/SKILL.md
 https://code.claude.com/docs/en/skills
 
 https://github.com/jmanhype/speckit
+
+
+https://github.com/decebals/claude-code-java/tree/main/skills/java-code-review
