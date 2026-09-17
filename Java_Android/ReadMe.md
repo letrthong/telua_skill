@@ -32,8 +32,8 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📌 **[tasks/](file:///d:/code/telua_skill/Java_Android/tasks/CHECKLIST.md)**: Master task progress board (`CHECKLIST.md`), task cards, sprint tracking, and step-by-step progress checklists.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/README.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[scripts/](file:///d:/code/telua_skill/Java_Android/scripts/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 19 gold-standard benchmark reference templates.
-* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 26 mandatory engineering quality & safety rule modules.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 20 gold-standard benchmark reference templates.
+* 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 27 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
 
@@ -100,6 +100,7 @@ flowchart LR
 * 📄 **[api_timeout_resilience_rule.md](file:///d:/code/telua_skill/Java_Android/rules/api_timeout_resilience_rule.md)**: Evaluating library API latency, explicit 3-5s timeout configuration, and background thread Future timeout wrappers.
 * 📄 **[ui_thread_rule.md](file:///d:/code/telua_skill/Java_Android/rules/ui_thread_rule.md)**: Main UI thread safety, ANR prevention, background execution, and thread-safe View updates.
 * 📄 **[executor_shutdown_rule.md](file:///d:/code/telua_skill/Java_Android/rules/executor_shutdown_rule.md)**: Mandatory shutdown of `Executor` / `ExecutorService` thread pools in lifecycle teardowns.
+* 📄 **[heap_stack_object_lifetime_rule.md](file:///d:/code/telua_skill/Java_Android/rules/heap_stack_object_lifetime_rule.md)**: Java Memory Model semantics (HEAP vs STACK), object lifetime across background thread termination, safe publication via `AtomicReference`, and `awaitTermination()` CPU optimization.
 * 📄 **[resource_leak_rule.md](file:///d:/code/telua_skill/Java_Android/rules/resource_leak_rule.md)**: `try-with-resources` for `AutoCloseable`, SQLite Cursor closing, symmetric `BroadcastReceiver` unregistering.
 * 📄 **[singleton_thread_safety_rule.md](file:///d:/code/telua_skill/Java_Android/rules/singleton_thread_safety_rule.md)**: Bill Pugh & volatile double-checked locking for thread-safe singletons, `ApplicationContext` usage.
 * 📄 **[thread_safety_concurrency_rule.md](file:///d:/code/telua_skill/Java_Android/rules/thread_safety_concurrency_rule.md)**: Volatile reference local copy snapshot idiom, TOCTOU bug prevention, immutable safe publication, atomic primitives, and Singleton concurrency optimization.
@@ -109,7 +110,7 @@ flowchart LR
 * 📄 **[magic_number_immutability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/magic_number_immutability_rule.md)**: Total prohibition of magic numbers/strings, mandatory extraction of constants, and defensive immutability.
 * 📄 **[comment_and_documentation_rule.md](file:///d:/code/telua_skill/Java_Android/rules/comment_and_documentation_rule.md)**: Clean Code Chapter 4 standards: self-documenting code, Javadoc in English, elimination of noise comments.
 * 📄 **[handler_rule.md](file:///d:/code/telua_skill/Java_Android/rules/handler_rule.md)**: Defensive null safety guards on chained getters, mandatory `removeCallbacksAndMessages(null)` cleanup.
-* 📄 **[for_loop_rule.md](file:///d:/code/telua_skill/Java_Android/rules/for_loop_rule.md)**: Prohibition of manual `for(int i=0;...)` loops; mandatory use of enhanced `for(Item item : list)` or Java Streams.
+* 📄 **[for_loop_and_if_else_rule.md](file:///d:/code/telua_skill/Java_Android/rules/for_loop_and_if_else_rule.md)**: Prohibition of manual `for(int i=0;...)` loops; mandatory use of enhanced `for(Item item : list)` or Java Streams, clean if-else branching.
 * 📄 **[exception_handling_rule.md](file:///d:/code/telua_skill/Java_Android/rules/exception_handling_rule.md)**: Prohibition of empty catch blocks, catching specific exception types, preserving exception cause chaining.
 * 📄 **[log_rule.md](file:///d:/code/telua_skill/Java_Android/rules/log_rule.md)**: Prohibition of `System.out.println()` / `e.printStackTrace()`, dynamic `TAG = MyClass.class.getSimpleName()`, PII data protection, `BuildConfig.DEBUG` guarding.
 * 📄 **[unit_testability_rule.md](file:///d:/code/telua_skill/Java_Android/rules/unit_testability_rule.md)**: Constructor Dependency Injection, abstracting static/system calls, Arrange-Act-Assert (AAA) JUnit testing pattern, and mandatory test generation.
@@ -140,6 +141,7 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[MultiSubscriberConnectionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/MultiSubscriberConnectionTemplate.java)**: Push/Observer Re-share architecture solving the Stale Connection Bug across multiple client classes (ClientA, ClientB) via CopyOnWriteArrayList and atomic reconnect broadcast.
 * ☕ **[ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java)**: Provider Indirection & Auto-Reconnect pattern eliminating stale references; consumer classes query connection on-demand via Volatile Local Copy without manual callback re-wiring.
 * ☕ **[CarAudioConnectionSharingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarAudioConnectionSharingTemplate.java)**: Production AOSP Car.createCar + CarAudioManager multi-client sharing architecture; manages background offloading, automatic re-sharing to Class A & B upon CarService restart, and VolumeCallback re-registration.
+* ☕ **[SharedObjectShutdownTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SharedObjectShutdownTemplate.java)**: Object lifetime benchmark demonstrating HEAP vs STACK survival after thread shutdown, safe publication via `AtomicReference`, layered null-safety, and exception resilience.
 
 ### 💡 Featured Case Study: AOSP Integration & Rule Alignment (`CarVolumeCallbackHandler`)
 

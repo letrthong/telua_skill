@@ -10,8 +10,8 @@ This repository serves as a centralized, multi-domain knowledge base containing 
 telua_skill/
 ├── 🤖 Java_Android/            # Java & Android System Service Engineering Suite
 │   ├── ReadMe.md              # Master manifest & system directive for Java/Android
-│   ├── rules/                 # 23 mandatory quality, safety, threading & IPC rules
-│   ├── examples/              # 13 gold-standard benchmark reference templates
+│   ├── rules/                 # 27 mandatory quality, safety, threading & IPC rules
+│   ├── examples/              # 20 gold-standard benchmark reference templates
 │   ├── requirements/          # Business requirements & acceptance criteria
 │   ├── design/                # Class diagrams & component architecture
 │   ├── docs/                  # Integrated SDK & dependency risk registry
@@ -29,13 +29,13 @@ telua_skill/
 
 Designed for mission-critical Android System Services, Automotive (AAOS) applications, and enterprise Java development:
 
-* 📜 **24 Quality & Safety Rule Modules ([rules/](file:///d:/code/telua_skill/Java_Android/rules/))**:
+* 📜 **27 Quality & Safety Rule Modules ([rules/](file:///d:/code/telua_skill/Java_Android/rules/))**:
   * **IPC & Binder Safety:** AIDL `oneway` callbacks, Binder thread pool offloading (<5ms), 1MB buffer limits, `RemoteCallbackList`, `linkToDeath()`, Parcelable field ordering, permission checks, `clearCallingIdentity`.
   * **Threading & Resilience:** UI thread safety, ANR prevention, `ExecutorService` lifecycle shutdown, API latency timeout wrappers.
   * **Architecture & Hygiene:** Clean Code separation (DTO vs Service), Constructor DI, 35-line method limits, Builder pattern for $\le 3$ params, non-destructive AI code preservation (`ai_preservation_rule.md`), logger encapsulation (`AppLogger`).
   * **Static Analysis:** Android Lint (`./gradlew lintDebug`), Checkstyle, and PMD quality gates.
 
-* 💻 **14 Benchmark Reference Templates ([examples/](file:///d:/code/telua_skill/Java_Android/examples/))**:
+* 💻 **20 Benchmark Reference Templates ([examples/](file:///d:/code/telua_skill/Java_Android/examples/))**:
   * Gold-standard code benchmarks for Producer-Consumer bounded queues, `CarServiceConnection`, Observer-Strategy-Factory architecture, CarProperty subscriptions, Repository pattern, and JUnit4/Mockito test suites.
 
 ---
