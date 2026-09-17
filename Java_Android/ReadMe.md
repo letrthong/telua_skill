@@ -32,7 +32,7 @@ Whenever generating, reviewing, or refactoring Java/Android code in this workspa
 * 📌 **[tasks/](file:///d:/code/telua_skill/Java_Android/tasks/CHECKLIST.md)**: Master task progress board (`CHECKLIST.md`), task cards, sprint tracking, and step-by-step progress checklists.
 * 📁 **[docs/](file:///d:/code/telua_skill/Java_Android/docs/README.md)**: Shared knowledge registry for integrated SDKs, library dependencies, imports, and risks.
 * 🛠️ **[scripts/](file:///d:/code/telua_skill/Java_Android/scripts/mcp_config_guide.md)**: Development tool configurations, GitHub MCP Server setup, and integration guides.
-* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 20 gold-standard benchmark reference templates.
+* 📁 **[examples/](file:///d:/code/telua_skill/Java_Android/examples/)**: 23 gold-standard benchmark reference templates.
 * 📁 **[rules/](file:///d:/code/telua_skill/Java_Android/rules/)**: 27 mandatory engineering quality & safety rule modules.
 
 ### 🔍 Detailed Distinction Between `requirements/`, `design/`, and `docs/`
@@ -142,6 +142,9 @@ The following reference templates serve as gold-standard code benchmarks for AI 
 * ☕ **[ResilientConnectionShareTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResilientConnectionShareTemplate.java)**: Provider Indirection & Auto-Reconnect pattern eliminating stale references; consumer classes query connection on-demand via Volatile Local Copy without manual callback re-wiring.
 * ☕ **[CarAudioConnectionSharingTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/CarAudioConnectionSharingTemplate.java)**: Production AOSP Car.createCar + CarAudioManager multi-client sharing architecture; manages background offloading, automatic re-sharing to Class A & B upon CarService restart, and VolumeCallback re-registration.
 * ☕ **[SharedObjectShutdownTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SharedObjectShutdownTemplate.java)**: Object lifetime benchmark demonstrating HEAP vs STACK survival after thread shutdown, safe publication via `AtomicReference`, layered null-safety, and exception resilience.
+* ☕ **[SafeHandlerLeakPreventionTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SafeHandlerLeakPreventionTemplate.java)**: Static nested Handler and WeakReference host callback benchmark preventing Activity/Service memory leaks, paired with idempotent `removeCallbacksAndMessages(null)` cleanup.
+* ☕ **[SafeBuilderPatternTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/SafeBuilderPatternTemplate.java)**: Parameter Object encapsulation and fluent Builder Pattern benchmark enforcing the $\le 3$ parameter limit, build-time fail-fast boundary validation, and defensive immutability.
+* ☕ **[ResourceLeakSafetyTemplate.java](file:///d:/code/telua_skill/Java_Android/examples/ResourceLeakSafetyTemplate.java)**: System resource lifecycle benchmark demonstrating `try-with-resources` for I/O streams, native SQLite Cursor cleanup, and symmetric `BroadcastReceiver` registration/unregistration.
 
 ### 💡 Featured Case Study: AOSP Integration & Rule Alignment (`CarVolumeCallbackHandler`)
 

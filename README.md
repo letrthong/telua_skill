@@ -11,7 +11,7 @@ telua_skill/
 ├── 🤖 Java_Android/            # Java & Android System Service Engineering Suite
 │   ├── ReadMe.md              # Master manifest & system directive for Java/Android
 │   ├── rules/                 # 27 mandatory quality, safety, threading & IPC rules
-│   ├── examples/              # 20 gold-standard benchmark reference templates
+│   ├── examples/              # 23 gold-standard benchmark reference templates
 │   ├── requirements/          # Business requirements & acceptance criteria
 │   ├── design/                # Class diagrams & component architecture
 │   ├── docs/                  # Integrated SDK & dependency risk registry
@@ -35,7 +35,7 @@ Designed for mission-critical Android System Services, Automotive (AAOS) applica
   * **Architecture & Hygiene:** Clean Code separation (DTO vs Service), Constructor DI, 35-line method limits, Builder pattern for $\le 3$ params, non-destructive AI code preservation (`ai_preservation_rule.md`), logger encapsulation (`AppLogger`).
   * **Static Analysis:** Android Lint (`./gradlew lintDebug`), Checkstyle, and PMD quality gates.
 
-* 💻 **20 Benchmark Reference Templates ([examples/](file:///d:/code/telua_skill/Java_Android/examples/))**:
+* 💻 **23 Benchmark Reference Templates ([examples/](file:///d:/code/telua_skill/Java_Android/examples/))**:
   * Gold-standard code benchmarks for Producer-Consumer bounded queues, `CarServiceConnection`, Observer-Strategy-Factory architecture, CarProperty subscriptions, Repository pattern, and JUnit4/Mockito test suites.
 
 ---
