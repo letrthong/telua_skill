@@ -1,7 +1,7 @@
 <!--
   Copyright (C) 2026 letrthong@gmail.com
   Created & Maintained by: letrthong@gmail.com
-  Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
+  Generated & Refactored by: Gemini 3.8 Pro (Google DeepMind)
   Licensed under the Apache License, Version 2.0 (http://www.apache.org/licenses/LICENSE-2.0)
 -->
 
@@ -31,6 +31,37 @@ When wrapping and rethrowing exceptions, always pass the original exception as t
 * **Separation of Side Effects:** A method must either perform an action (Command — mutating state) **OR** return data (Query — pure calculation without side effects), but never both.
 * **❌ Anti-Pattern:** `if (setAttr("key", "val")) { ... }` (Mutates attribute AND returns boolean).
 * **✅ Best Practice:** `if (attributeExists("key")) { setAttribute("key", "val"); }`
+
+### Rule 1.6: Defensive Null-Safety Pattern — `@NonNull` + `Objects.requireNonNull`
+* **Layered Defense:** Combine compile-time annotation with runtime fail-fast:
+  * **`@NonNull` annotation:** Declares the contract (documentation + lint warning at compile time). It does **NOT** prevent null at runtime.
+  * **`Objects.requireNonNull(value, "message")`:** Runtime fail-fast at the boundary (constructor / setter / factory). Throws `NullPointerException` immediately with a clear message when null is passed.
+* **Null-Check Placement — check ONCE at the boundary, never at every usage site:**
+  * ✅ **Constructor / setter parameters** → `Objects.requireNonNull(param, "param must not be null")`.
+  * ✅ **System APIs that can return null** (e.g., `context.getSystemService(...)`, `getCarManager()`) → explicit `if (x == null) throw new IllegalStateException(...)`.
+  * ❌ **Do NOT** add redundant `if (x != null)` checks at usage sites for fields already guaranteed non-null by `requireNonNull` — this hides bugs and adds noise.
+* **Example:**
+```java
+public class PaymentManager {
+    private final PaymentGateway mGateway;
+    private final NotificationManager mNotificationManager;
+
+    public PaymentManager(@NonNull PaymentGateway gateway, @NonNull Context context) {
+        // Boundary fail-fast for injected dependencies
+        mGateway = Objects.requireNonNull(gateway, "gateway must not be null");
+        // System API may return null -> explicit check
+        mNotificationManager = context.getSystemService(NotificationManager.class);
+        if (mNotificationManager == null) {
+            throw new IllegalStateException("NotificationManager not available");
+        }
+    }
+
+    // Usage site: NO null-check needed, mGateway is guaranteed non-null
+    public void pay(Order order) {
+        mGateway.charge(order);
+    }
+}
+```
 
 ---
 
@@ -85,3 +116,6 @@ Before emitting any Java code containing try-catch blocks:
 1. [ ] Are all catch blocks non-empty with proper logging or fallback handling? -> **Must be Yes**.
 2. [ ] Are specific exception types caught instead of raw `Exception`? -> **Must be Yes**.
 3. [ ] When rethrowing, is the original exception passed as the `cause`? -> **Must be Yes**.
+4. [ ] Are injected dependencies (constructor/setter params) guarded with `Objects.requireNonNull`? -> **Must be Yes**.
+5. [ ] Are system APIs that may return null (e.g., `getSystemService`) explicitly null-checked? -> **Must be Yes**.
+6. [ ] Are redundant `if (x != null)` checks at usage sites avoided for fields already guaranteed non-null? -> **Must be Yes**.
