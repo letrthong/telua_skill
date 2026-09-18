@@ -24,11 +24,17 @@ import java.util.Objects;
  * Standard Thread-Safe Singleton Reference Template.
  *
  * Key Principles Demonstrated:
- * 1. Bill Pugh Singleton Holder pattern for thread safety without synchronization overhead.
+ * 1. Volatile Double-Checked Locking (DCL) for thread safety with minimal synchronization overhead.
+ *    NOTE: Bill Pugh Holder is NOT used here because this singleton requires a {@link Context}
+ *    parameter at creation time; Bill Pugh only works for parameterless constructors.
  * 2. Storing ApplicationContext to prevent Activity Context Memory Leaks.
  * 3. Private constructor preventing direct instantiation.
  */
 public class SingletonTemplate {
+
+    // 'volatile' is MANDATORY: prevents instruction reordering so the partially-constructed
+    // instance is never published to other threads (see singleton_thread_safety_rule.md Rule 1.2).
+    private static volatile SingletonTemplate sInstance;
 
     private final Context mApplicationContext;
 
@@ -39,20 +45,17 @@ public class SingletonTemplate {
     }
 
     /**
-     * Lazy-loaded, thread-safe instance holder created by the JVM classloader.
-     */
-    private static class InstanceHolder {
-        private static SingletonTemplate sInstance;
-    }
-
-    /**
-     * Thread-safe initialization method.
+     * Thread-safe initialization method (idempotent).
      * Must be called during Application onCreate().
      */
-    public static synchronized void init(Context context) {
+    public static void init(Context context) {
         Objects.requireNonNull(context, "Context cannot be null");
-        if (InstanceHolder.sInstance == null) {
-            InstanceHolder.sInstance = new SingletonTemplate(context);
+        if (sInstance == null) {
+            synchronized (SingletonTemplate.class) {
+                if (sInstance == null) {
+                    sInstance = new SingletonTemplate(context);
+                }
+            }
         }
     }
 
@@ -60,12 +63,15 @@ public class SingletonTemplate {
      * Retrieves the global singleton instance.
      *
      * @return Thread-safe Singleton instance
+     * @throws IllegalStateException if {@link #init(Context)} has not been called yet
      */
     public static SingletonTemplate getInstance() {
-        if (InstanceHolder.sInstance == null) {
+        // Local copy snapshot: avoids TOCTOU race between the null check and the return.
+        SingletonTemplate instance = sInstance;
+        if (instance == null) {
             throw new IllegalStateException("SingletonTemplate must be initialized before use!");
         }
-        return InstanceHolder.sInstance;
+        return instance;
     }
 
     public Context getApplicationContext() {
