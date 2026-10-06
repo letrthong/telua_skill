@@ -5,10 +5,6 @@
 # Generated & Refactored by: Gemini 3.6 Pro (Google DeepMind)
 # Licensed under the Apache License, Version 2.0
 # ==============================================================================
-# Usage:
-#   ./build_oemcarservice_apk.sh --start-deploy true
-#   ./build_oemcarservice_apk.sh --start-deploy false
-# ==============================================================================
 
 set -e
 
