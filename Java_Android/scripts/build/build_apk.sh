@@ -73,104 +73,25 @@ parse_arguments() {
 
 # --- 1b. Diagnostic Info (--info) ---
 show_info() {
-    echo ""
-    echo -e "\033[1;36m============================================================\033[0m"
-    echo -e "\033[1;36m       AOSP BUILD & ADB TARGET DIAGNOSTIC INFO              \033[0m"
-    echo -e "\033[1;36m============================================================\033[0m"
+    resolve_android_paths >/dev/null 2>&1 || true
 
-    echo ""
-    echo -e "\033[1;33m[1. Configuration Settings]\033[0m"
-    echo "  Config File:          $CONFIG_FILE"
-    echo "  Active Project:       ${ACTIVE_PROJECT:-default}"
-    echo "  Lunch Target:         ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
-    echo "  Module Source:        $SOURCE_CODE_RELATIVE_PATH"
-    echo "  Output Directory:     $APK_OUTPUT_RELATIVE_PATH"
-    echo "  APK File Name:        $APK_FILE_NAME"
-    echo "  Deploy Path:          $APK_DEPLOY_PATH"
-    echo "  Auto Deploy:          $ENABLE_DEPLOY"
-    echo "  Logcat Capture:       $ENABLE_LOGCAT"
+    echo -e "\n\033[1;36m=== AOSP BUILD & TARGET INFO ===\033[0m"
+    echo "  Project:      ${ACTIVE_PROJECT:-default}"
+    echo "  Target Lunch: ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
+    echo "  Module:       $SOURCE_CODE_RELATIVE_PATH"
+    echo "  APK Output:   $APK_OUTPUT_RELATIVE_PATH/$APK_FILE_NAME"
+    echo "  Deploy Path:  $APK_DEPLOY_PATH"
+    echo "  AOSP Top:     ${ANDROID_TOP:-Not found}"
 
-    echo ""
-    echo -e "\033[1;33m[2. AOSP Tree & Environment]\033[0m"
-    local current_dir="$SCRIPT_DIR"
-    local android_dir=""
-    while [ "$current_dir" != "/" ] && [ "$current_dir" != "." ]; do
-        if [ "$(basename "$current_dir")" = "android" ]; then
-            android_dir="$current_dir"
-            break
-        fi
-        current_dir="$(dirname "$current_dir")"
-    done
-
-    if [ -n "$android_dir" ]; then
-        local root_dir="$(dirname "$android_dir")"
-        echo "  AOSP Root:            $root_dir"
-        echo "  ANDROID_TOP:          $root_dir/android/qssi"
-        if [ -d "$root_dir/android/qssi/$SOURCE_CODE_RELATIVE_PATH" ]; then
-            echo -e "  Module Directory:     \033[1;32mFound\033[0m ($root_dir/android/qssi/$SOURCE_CODE_RELATIVE_PATH)"
-        else
-            echo -e "  Module Directory:     \033[1;31mNot found or using placeholder\033[0m"
-        fi
+    if command -v adb >/dev/null 2>&1; then
+        local dev_state build_type
+        dev_state=$(adb get-state 2>/dev/null || echo "offline")
+        build_type=$(adb shell getprop ro.build.type 2>/dev/null | tr -d '\r')
+        echo "  ADB Device:   $dev_state (Build: ${build_type:-unknown})"
     else
-        echo -e "  AOSP Root:            \033[1;33mNot detected (ancestor has no 'android' folder)\033[0m"
+        echo "  ADB Binary:   Not installed"
     fi
-
-    if [[ -n "$TARGET_PRODUCT" && -n "$TARGET_BUILD_VARIANT" ]]; then
-        echo -e "  Active Session:       \033[1;32m$TARGET_PRODUCT-$TARGET_BUILD_VARIANT\033[0m"
-    else
-        echo -e "  Active Session:       \033[1;33mNot initialized (lunch will run automatically)\033[0m"
-    fi
-
-    echo ""
-    echo -e "\033[1;33m[3. ADB & Connected Device]\033[0m"
-    if ! command -v adb >/dev/null 2>&1; then
-        echo -e "  ADB Binary:           \033[1;31mNot installed or not in PATH\033[0m"
-    else
-        local adb_path
-        adb_path=$(command -v adb)
-        echo "  ADB Binary:           $adb_path"
-
-        local adb_devices_output
-        adb_devices_output=$(adb devices | grep -v "List of devices" | grep -v "^$" || true)
-
-        if [ -z "$adb_devices_output" ]; then
-            echo -e "  Device Status:        \033[1;31mNo devices connected\033[0m"
-        else
-            echo "  Connected Devices:"
-            echo "$adb_devices_output" | while IFS= read -r line; do
-                echo "    - $line"
-            done
-
-            local device_state
-            device_state=$(adb get-state 2>/dev/null || echo "offline")
-            echo "  Primary State:        $device_state"
-
-            if [ "$device_state" = "device" ]; then
-                local d_model d_type d_release d_sdk
-                d_model=$(adb shell getprop ro.product.model 2>/dev/null | tr -d '\r')
-                d_type=$(adb shell getprop ro.build.type 2>/dev/null | tr -d '\r')
-                d_release=$(adb shell getprop ro.build.version.release 2>/dev/null | tr -d '\r')
-                d_sdk=$(adb shell getprop ro.build.version.sdk 2>/dev/null | tr -d '\r')
-
-                echo "  Device Model:         ${d_model:-unknown}"
-                echo "  Android Version:      Android $d_release (API level $d_sdk)"
-
-                if [ "$d_type" = "userdebug" ] || [ "$d_type" = "eng" ]; then
-                    echo -e "  Build Type:           \033[1;32m$d_type (Root / Remount supported)\033[0m"
-                else
-                    echo -e "  Build Type:           \033[1;31m$d_type (WARNING: 'user' build cannot remount)\033[0m"
-                fi
-
-                if adb shell "[ -d '$APK_DEPLOY_PATH' ]" 2>/dev/null; then
-                    echo -e "  Target Deploy Path:   \033[1;32mExists on device\033[0m ($APK_DEPLOY_PATH)"
-                else
-                    echo -e "  Target Deploy Path:   \033[1;33mNot yet created\033[0m ($APK_DEPLOY_PATH)"
-                fi
-            fi
-        fi
-    fi
-    echo -e "\033[1;36m============================================================\033[0m"
-    echo ""
+    echo -e "\033[1;36m================================\033[0m\n"
     exit 0
 }
 
