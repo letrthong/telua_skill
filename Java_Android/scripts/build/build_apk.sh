@@ -81,6 +81,7 @@ show_info() {
     echo ""
     echo -e "\033[1;33m[1. Configuration Settings]\033[0m"
     echo "  Config File:          $CONFIG_FILE"
+    echo "  Active Project:       ${ACTIVE_PROJECT:-default}"
     echo "  Lunch Target:         ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
     echo "  Module Source:        $SOURCE_CODE_RELATIVE_PATH"
     echo "  Output Directory:     $APK_OUTPUT_RELATIVE_PATH"
