@@ -14,7 +14,7 @@ echo.
 
 echo "after login"
 echo "adb kill-server
-echo "adb device"
+echo "adb devices"
 
 :: Create a reverse tunnel for the ADB port (5037)
 ssh -R 5037:127.0.0.1:5037 %USER_ID%@%REMOTE_IP% -p 22
