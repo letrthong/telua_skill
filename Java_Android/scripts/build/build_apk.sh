@@ -26,6 +26,7 @@ Usage: $0 [OPTIONS]
 Options:
   --info                      Display target, build config, and ADB device info
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
+  --no-reboot                 Fast restart (stop && start) instead of full device reboot
   --test-mode true|false     Run unit test suite instead of full build
   -h, --help, help           Display this help message and exit
 
@@ -49,6 +50,10 @@ parse_arguments() {
                 fi
                 ENABLE_DEPLOY="$2"
                 shift 2
+                ;;
+            --no-reboot)
+                NO_REBOOT="true"
+                shift
                 ;;
             --test-mode)
                 if [[ "$2" != "true" && "$2" != "false" ]]; then
@@ -84,6 +89,7 @@ show_info() {
     echo "  APK Output:   $APK_OUTPUT_RELATIVE_PATH/$APK_FILE_NAME"
     echo "  Deploy Path:  $APK_DEPLOY_PATH"
     echo "  Logcat Filter:${LOGCAT_FILTER:-None (full)}"
+    echo "  Debug Tags:   ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
     echo "  AOSP Top:     ${ANDROID_TOP:-Not found}"
 
     if command -v adb >/dev/null 2>&1; then
@@ -361,16 +367,48 @@ deploy_apk() {
     log_info "Pushing $APK_FILE_NAME to $APK_DEPLOY_PATH/$APK_FILE_NAME"
     adb push "$SCRIPT_DIR/$APK_FILE_NAME" "$APK_DEPLOY_PATH/$APK_FILE_NAME"
     adb shell chmod 644 "$APK_DEPLOY_PATH/$APK_FILE_NAME"
+    # Remove old oat/dex cache if present to ensure updated code runs
+    adb shell rm -rf "$APK_DEPLOY_PATH/oat" 2>/dev/null || true
     adb shell sync
 
-    log_info "Rebooting device to apply changes..."
-    adb reboot
-    wait_for_disconnect
+    if [ "$ENABLE_DEBUG_LOG" = "true" ] && [ -n "$DEBUG_LOG_TAGS" ]; then
+        local log_level="${DEBUG_LOG_LEVEL:-DEBUG}"
+        log_info "Setting $log_level log properties for tags: $DEBUG_LOG_TAGS"
+        for tag in $DEBUG_LOG_TAGS; do
+            adb shell setprop persist.log.tag."$tag" "$log_level"
+            adb shell setprop log.tag."$tag" "$log_level"
+        done
+        log_success "Debug log properties configured."
+    fi
 
-    log_info "Waiting for device to come back online after reboot (approx 2-3 mins)..."
-    if ! wait_for_device 300; then
-        log_error "Device did not come back online after reboot. Aborting."
-        exit 1
+    if [ "$NO_REBOOT" = "true" ]; then
+        log_info "Fast restart requested (--no-reboot): restarting Android framework..."
+        adb shell stop
+        sleep 1
+        adb shell start
+
+        log_info "Waiting for Android framework to be ready (timeout: 60s)..."
+        local wait_sec=0
+        while [ "$wait_sec" -lt 60 ]; do
+            local boot_completed
+            boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            if [ "$boot_completed" = "1" ]; then
+                log_info "Android framework restarted successfully."
+                break
+            fi
+            sleep 1
+            wait_sec=$((wait_sec + 1))
+        done
+    else
+        log_info "Rebooting device to apply changes..."
+        adb reboot
+        wait_for_disconnect
+
+        log_info "Waiting for device to come back online after reboot (approx 2-3 mins)..."
+        if ! wait_for_device 300; then
+            log_error "Device did not come back online after reboot. Aborting."
+            exit 1
+        fi
     fi
 
     adb devices
