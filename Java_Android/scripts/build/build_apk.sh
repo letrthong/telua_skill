@@ -81,6 +81,7 @@ show_info() {
     echo "  Module:       $SOURCE_CODE_RELATIVE_PATH"
     echo "  APK Output:   $APK_OUTPUT_RELATIVE_PATH/$APK_FILE_NAME"
     echo "  Deploy Path:  $APK_DEPLOY_PATH"
+    echo "  Logcat Filter:${LOGCAT_FILTER:-None (full)}"
     echo "  AOSP Top:     ${ANDROID_TOP:-Not found}"
 
     if command -v adb >/dev/null 2>&1; then
@@ -380,8 +381,13 @@ capture_logs() {
     fi
 
     local log_file="$SCRIPT_DIR/deployment_log.txt"
-    log_info "Capturing logcat filtered by 'AUDIO' to $log_file"
-    adb logcat -d | grep -E "AUDIO" > "$log_file" || true
+    if [ -n "$LOGCAT_FILTER" ]; then
+        log_info "Capturing logcat filtered by '$LOGCAT_FILTER' to $log_file"
+        adb logcat -d | grep -E "$LOGCAT_FILTER" > "$log_file" || true
+    else
+        log_info "Capturing full logcat (no filter) to $log_file"
+        adb logcat -d > "$log_file" || true
+    fi
     log_success "Deployment log saved to $log_file"
 }
 
