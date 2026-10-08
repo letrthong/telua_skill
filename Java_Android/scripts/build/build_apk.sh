@@ -27,6 +27,7 @@ Options:
   --info                      Display target, build config, and ADB device info
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
+  --softlink <path>           Symlink this script + copy $CONFIG_FILE_NAME into <path> (overwrites)
   --test-mode true|false     Run unit test suite instead of full build
   -h, --help, help           Display this help message and exit
 
@@ -55,6 +56,14 @@ parse_arguments() {
                 NO_REBOOT="true"
                 shift
                 ;;
+            --softlink)
+                if [ -z "$2" ]; then
+                    log_error "--softlink requires a target directory path"
+                    exit 1
+                fi
+                SOFTLINK_PATH="$2"
+                shift 2
+                ;;
             --test-mode)
                 if [[ "$2" != "true" && "$2" != "false" ]]; then
                     log_error "--test-mode requires 'true' or 'false', got '$2'"
@@ -74,6 +83,45 @@ parse_arguments() {
                 ;;
         esac
     done
+}
+
+# --- 1a. Install into a project directory (--softlink <path>) ---
+# Symlinks this script (fixes to the original reach every project) and copies
+# apk.config (each project keeps its own settings). Existing files are overwritten.
+# NOTE: the script finds apk.config and the 'android' root relative to the
+# link's location, so <path> must be inside the target AOSP tree.
+install_to_project() {
+    local target_dir="$1"
+    local real_script real_target
+
+    if [ ! -d "$target_dir" ]; then
+        log_error "Target directory does not exist: $target_dir"
+        exit 1
+    fi
+
+    # Resolve the ORIGINAL script, even if this run was started via a symlink.
+    real_script="$(readlink -f "${BASH_SOURCE[0]}")"
+    real_target="$(cd "$target_dir" && pwd -P)"
+
+    if [ "$real_target" = "$(dirname "$real_script")" ] \
+        || [ "$real_target" = "$(cd "$SCRIPT_DIR" && pwd -P)" ]; then
+        log_error "Target is the script's own directory: $real_target"
+        exit 1
+    fi
+
+    case "$real_target/" in
+        */android/*) ;;
+        *) log_warn "'$real_target' is not under an 'android' directory; the build will not find the AOSP tree from there." ;;
+    esac
+
+    ln -sfn "$real_script" "$real_target/build_apk.sh"
+    # rm first: if the old config is a symlink, 'cp' would write through it.
+    rm -f "$real_target/$CONFIG_FILE_NAME"
+    cp "$CONFIG_FILE" "$real_target/$CONFIG_FILE_NAME"
+
+    log_success "Linked:  $real_target/build_apk.sh -> $real_script"
+    log_success "Copied:  $CONFIG_FILE -> $real_target/$CONFIG_FILE_NAME"
+    log_info "Next: edit $real_target/$CONFIG_FILE_NAME, then run: cd \"$real_target\" && ./build_apk.sh --info"
 }
 
 # --- 1b. Diagnostic Info (--info) ---
@@ -532,6 +580,11 @@ capture_logs() {
 main() {
     load_and_validate_config
     parse_arguments "$@"
+
+    if [ -n "$SOFTLINK_PATH" ]; then
+        install_to_project "$SOFTLINK_PATH"
+        exit 0
+    fi
 
     if [ "$SHOW_INFO" = "true" ]; then
         show_info
