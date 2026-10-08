@@ -13,6 +13,9 @@ An automated developer workflow script for building and deploying privileged sys
 
 ## 1. Prerequisites
 
+> [!IMPORTANT]
+> **Linux Only:** AOSP compilation tools (`build/envsetup.sh`, `lunch`, Soong, Ninja, and `m`) are strictly designed for Linux environments (e.g., Ubuntu LTS). This script cannot run directly on Windows Command Prompt or PowerShell. If editing on Windows, ensure files maintain Linux (LF) line endings before pushing to your Linux build host.
+
 - **Linux build host** with an initialized AOSP source tree adhering to `.../android/qssi/` (must contain `build/envsetup.sh`).
 - **ADB** (`platform-tools`) installed and accessible in `$PATH`.
 - **Target Device** running a **`userdebug`** or **`eng`** build image. Production `user` builds strictly disallow `adb root` and `adb remount` (script will safely abort).
@@ -49,7 +52,7 @@ nano apk.config
 Maintain **a single golden copy of `build_apk.sh`** shared across multiple independent AOSP checkouts, release branches, or workspaces. Each workspace maintains its own standalone `apk.config`.
 
 ```
-d:/code/telua_skill/.../build/          ← Master Repository (edit logic here)
+~/code/telua_skill/.../build/           ← Master Repository (edit logic here)
 ├── build_apk.sh
 └── apk.config                          ← Configuration Template
 
