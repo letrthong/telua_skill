@@ -2,7 +2,7 @@
 # ==============================================================================
 # Copyright (C) 2026 letrthong@gmail.com
 # Created & Maintained by: letrthong@gmail.com
-# Refactored: Modular functional architecture for AOSP build & deploy
+# Generated & Refactored by: Gemini 3.8 Pro (Google DeepMind)
 # Licensed under the Apache License, Version 2.0
 # ==============================================================================
 
@@ -381,6 +381,12 @@ deploy_apk() {
             adb shell setprop log.tag."$tag" "$log_level"
         done
         log_success "Debug log properties configured."
+    fi
+
+    # Clear old logcat buffer before restart so captured logs are 100% fresh
+    if [ "$ENABLE_LOGCAT" = "true" ]; then
+        log_info "Clearing previous device logcat buffer (adb logcat -c)..."
+        adb logcat -c 2>/dev/null || true
     fi
 
     if [ "$NO_REBOOT" = "true" ]; then
