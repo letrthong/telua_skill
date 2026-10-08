@@ -9,7 +9,7 @@
 set -e
 
 # --- Constants & Global Defaults ---
-CONFIG_FILE_NAME=".config"
+CONFIG_FILE_NAME="apk.config"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/$CONFIG_FILE_NAME"
 
