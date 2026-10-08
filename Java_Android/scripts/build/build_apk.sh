@@ -92,7 +92,7 @@ show_info() {
     echo "  Deploy Path:  $APK_DEPLOY_PATH"
     echo "  Logcat Filter:${LOGCAT_FILTER:-None (full)}"
     echo "  Debug Tags:   ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
-    echo "  AOSP Top:     ${ANDROID_TOP:-Not found}"
+    echo "  AOSP Top:     ${ANDROID_TOP:-Not found (no 'android' dir above $SCRIPT_DIR)}"
 
     if command -v adb >/dev/null 2>&1; then
         local dev_state build_type internal_id vendor_build_type
@@ -185,7 +185,8 @@ resolve_android_paths() {
 
     if [ -z "$android_dir" ]; then
         log_error "Could not find the 'android' root directory in ancestor paths!"
-        exit 1
+        # 'return' (not 'exit') so callers like show_info can recover.
+        return 1
     fi
 
     ROOT_DIR="$(dirname "$android_dir")"
@@ -287,6 +288,37 @@ wait_for_disconnect() {
     fi
 }
 
+# Restart the Android framework without a full reboot (--no-reboot).
+# NOTE: sys.boot_completed usually stays "1" across 'stop'/'start', so it
+# cannot detect readiness. Instead, wait for a NEW system_server PID and for
+# PackageManager to answer.
+restart_framework() {
+    local timeout_sec="${1:-90}"
+    local elapsed=0
+    local old_pid new_pid
+
+    old_pid=$(adb shell pidof system_server 2>/dev/null | tr -d '\r')
+    log_info "Fast restart (--no-reboot): restarting Android framework (old system_server PID: ${old_pid:-none})..."
+    adb shell stop
+    sleep 1
+    adb shell start
+
+    log_info "Waiting for Android framework to be ready (timeout: ${timeout_sec}s)..."
+    while [ "$elapsed" -lt "$timeout_sec" ]; do
+        new_pid=$(adb shell pidof system_server 2>/dev/null | tr -d '\r')
+        if [ -n "$new_pid" ] && [ "$new_pid" != "$old_pid" ] \
+            && adb shell pm path android 2>/dev/null | grep -q "package:"; then
+            log_info "Android framework is up (new system_server PID: $new_pid) after ${elapsed}s."
+            return 0
+        fi
+        sleep 1
+        elapsed=$((elapsed + 1))
+    done
+
+    log_error "Android framework did not come back within ${timeout_sec}s."
+    return 1
+}
+
 # --- 8. Ensure ADB Remount (Handles first-time reboot requirement) ---
 # NOTE:
 # 1. Device MUST run a 'userdebug' or 'eng' build image. Production 'user' builds
@@ -295,11 +327,8 @@ wait_for_disconnect() {
 #    reboot and may take ~3-5 mins before the system partition becomes writable.
 # 3. Subsequent remounts will complete instantly in 1-2 seconds.
 ensure_adb_remount() {
-    log_info "Acquiring root access (adb root)..."
-    adb root
-    wait_for_device 30
-
-    # Verify userdebug / eng build variant
+    # Verify userdebug / eng build variant first (getprop works without root),
+    # so 'user' builds get a clear error instead of a failed 'adb root'.
     local build_type
     build_type=$(adb shell getprop ro.build.type 2>/dev/null | tr -d '\r')
     log_info "Detected device build variant: '${build_type:-unknown}'"
@@ -309,12 +338,21 @@ ensure_adb_remount() {
         exit 1
     fi
 
-    log_info "Checking filesystem write permissions (adb remount)..."
+    log_info "Acquiring root access (adb root)..."
+    acquire_root || exit 1
+
+    log_info "Remounting partitions read-write (adb remount)..."
     local remount_output
     remount_output=$(adb remount 2>&1 || true)
     echo "$remount_output"
 
-    # Check if first-time remount setup requires a reboot
+    # Trust an actual write test, not adb's message text (it varies by version).
+    if is_deploy_path_writable; then
+        log_success "Filesystem is writable."
+        return 0
+    fi
+
+    # Not writable yet: first-time overlayfs/scratch setup needs a reboot.
     if echo "$remount_output" | grep -qiE "reboot|scratch"; then
         log_warn "First-time remount detected (overlayfs/scratch setup required)."
         log_info "Rebooting device now (this first-time initialization takes ~3-5 minutes)..."
@@ -326,19 +364,42 @@ ensure_adb_remount() {
         fi
 
         log_info "Device back online. Re-acquiring root and completing remount..."
-        adb root
-        wait_for_device 30
-        local second_remount
-        second_remount=$(adb remount 2>&1 || true)
-        echo "$second_remount"
-        if echo "$second_remount" | grep -qi "remount failed"; then
-            log_error "adb remount failed after reboot. Aborting."
-            exit 1
+        acquire_root || exit 1
+        remount_output=$(adb remount 2>&1 || true)
+        echo "$remount_output"
+        if is_deploy_path_writable; then
+            log_success "First-time remount setup complete. Filesystem is writable."
+            return 0
         fi
-        log_success "First-time remount setup complete."
-    else
-        log_success "Filesystem remounted quickly (1-2s)."
     fi
+
+    log_error "'$(dirname "$APK_DEPLOY_PATH")' is still read-only after 'adb remount'."
+    log_error "See the remount output above (if verity is enabled: 'adb disable-verity' then reboot)."
+    exit 1
+}
+
+# Wait until adbd actually runs as root (uid 0). 'adb root' restarts adbd, so a
+# plain wait_for_device can return on the old, non-root session.
+acquire_root() {
+    local elapsed=0
+    while [ "$elapsed" -lt 30 ]; do
+        if [ "$(adb shell id -u 2>/dev/null | tr -d '\r')" = "0" ]; then
+            log_info "adbd is running as root."
+            return 0
+        fi
+        adb root >/dev/null 2>&1 || true
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+    log_error "adbd is not running as root after 30s ('adb root' failed)."
+    return 1
+}
+
+# Return 0 if the parent directory of APK_DEPLOY_PATH can be written to.
+is_deploy_path_writable() {
+    local probe
+    probe="$(dirname "$APK_DEPLOY_PATH")/.build_apk_rw_test"
+    adb shell "touch '$probe' && rm -f '$probe'" >/dev/null 2>&1
 }
 
 
@@ -390,23 +451,10 @@ deploy_apk() {
     fi
 
     if [ "$NO_REBOOT" = "true" ]; then
-        log_info "Fast restart requested (--no-reboot): restarting Android framework..."
-        adb shell stop
-        sleep 1
-        adb shell start
-
-        log_info "Waiting for Android framework to be ready (timeout: 60s)..."
-        local wait_sec=0
-        while [ "$wait_sec" -lt 60 ]; do
-            local boot_completed
-            boot_completed=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
-            if [ "$boot_completed" = "1" ]; then
-                log_info "Android framework restarted successfully."
-                break
-            fi
-            sleep 1
-            wait_sec=$((wait_sec + 1))
-        done
+        if ! restart_framework 90; then
+            log_error "Fast restart failed. Re-run without --no-reboot for a full reboot."
+            exit 1
+        fi
     else
         log_info "Rebooting device to apply changes..."
         adb reboot
@@ -450,7 +498,7 @@ main() {
     fi
 
     # Test scripts need ANDROID_BUILD_TOP, so set up the build env before them.
-    resolve_android_paths
+    resolve_android_paths || exit 1
     setup_build_environment
 
     run_tests
