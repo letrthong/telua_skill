@@ -80,12 +80,14 @@ parse_arguments() {
 show_info() {
     resolve_android_paths >/dev/null 2>&1 || true
 
+    local module_name="${MODULE_NAME:-${APK_FILE_NAME%.apk}}"
     local jobs="${BUILD_JOBS:-$(nproc 2>/dev/null || echo 8)}"
     echo -e "\n\033[1;36m=== AOSP BUILD & TARGET INFO ===\033[0m"
     echo "  Project:      ${ACTIVE_PROJECT:-default}"
     echo "  Target Lunch: ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
     echo "  Build Jobs:   -j$jobs"
-    echo "  Module:       $SOURCE_CODE_RELATIVE_PATH"
+    echo "  Module Name:  $module_name (m $module_name)"
+    echo "  Source Path:  $SOURCE_CODE_RELATIVE_PATH"
     echo "  APK Output:   $APK_OUTPUT_RELATIVE_PATH/$APK_FILE_NAME"
     echo "  Deploy Path:  $APK_DEPLOY_PATH"
     echo "  Logcat Filter:${LOGCAT_FILTER:-None (full)}"
@@ -242,7 +244,7 @@ build_apk() {
     cd "$SOURCE_DIR"
     # 'mm' builds every module under the directory, including tests/androidTest,
     # so build only the APK module (name = APK file name without .apk).
-    local module_name="${APK_FILE_NAME%.apk}"
+    local module_name="${MODULE_NAME:-${APK_FILE_NAME%.apk}}"
     local jobs="${BUILD_JOBS:-$(nproc 2>/dev/null || echo 8)}"
     log_info "Compiling module '$module_name' with m -j$jobs..."
     m "$module_name" -j"$jobs"
