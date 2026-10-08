@@ -288,6 +288,27 @@ wait_for_disconnect() {
     fi
 }
 
+# After a full reboot, wait until Android reports boot completed.
+# (Only valid after a real reboot: the property is reset at boot, but NOT by
+# 'stop'/'start' - see restart_framework.)
+wait_for_boot_completed() {
+    local timeout_sec="${1:-300}"
+    local elapsed=0
+
+    log_info "Waiting for boot to complete (sys.boot_completed=1, timeout: ${timeout_sec}s)..."
+    while [ "$elapsed" -lt "$timeout_sec" ]; do
+        if [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ]; then
+            log_info "Boot completed after ${elapsed}s."
+            return 0
+        fi
+        sleep 2
+        elapsed=$((elapsed + 2))
+    done
+
+    log_error "Boot did not complete within ${timeout_sec}s."
+    return 1
+}
+
 # Restart the Android framework without a full reboot (--no-reboot).
 # NOTE: sys.boot_completed usually stays "1" across 'stop'/'start', so it
 # cannot detect readiness. Instead, wait for a NEW system_server PID and for
@@ -465,6 +486,12 @@ deploy_apk() {
             log_error "Device did not come back online after reboot. Aborting."
             exit 1
         fi
+
+        # adb comes online early in boot; wait until Android reports boot done.
+        if ! wait_for_boot_completed 300; then
+            log_error "Device did not finish booting after reboot. Aborting."
+            exit 1
+        fi
     fi
 
     adb devices
@@ -478,6 +505,12 @@ capture_logs() {
     fi
 
     local log_file="$SCRIPT_DIR/deployment_log.txt"
+
+    # Give the app/service time to start and emit logs after boot/restart.
+    local settle="${LOGCAT_SETTLE_SECONDS:-10}"
+    log_info "Waiting ${settle}s for the app to start before capturing logcat..."
+    sleep "$settle"
+
     if [ -n "$LOGCAT_FILTER" ]; then
         log_info "Capturing logcat filtered by '$LOGCAT_FILTER' to $log_file"
         adb logcat -d | grep -E "$LOGCAT_FILTER" > "$log_file" || true
@@ -485,7 +518,14 @@ capture_logs() {
         log_info "Capturing full logcat (no filter) to $log_file"
         adb logcat -d > "$log_file" || true
     fi
-    log_success "Deployment log saved to $log_file"
+
+    local line_count
+    line_count=$(wc -l < "$log_file" | tr -d ' ')
+    if [ "$line_count" -eq 0 ]; then
+        log_warn "Captured log is empty. The app may not have started yet or LOGCAT_FILTER matches nothing."
+        log_warn "Try a larger LOGCAT_SETTLE_SECONDS in $CONFIG_FILE_NAME."
+    fi
+    log_success "Deployment log saved to $log_file ($line_count lines)"
 }
 
 # --- Main Entry Point ---
