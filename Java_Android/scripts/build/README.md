@@ -1,70 +1,76 @@
-# build_apk.sh — Build & Deploy APK hệ thống cho AOSP
+# build_apk.sh — AOSP System APK Build & Deployment Toolkit
 
-Script tự động hóa vòng lặp phát triển app hệ thống (`priv-app`) trên AOSP / Android Automotive (cây Qualcomm QSSI):
+An automated developer workflow script for building and deploying privileged system applications (`priv-app`) in **AOSP / Android Automotive** environments (Qualcomm QSSI architecture):
 
-**lunch → build module → root & remount → push APK → reboot / restart nhanh → lấy logcat**
+**lunch → build module → root & remount → push APK → reboot / fast restart → capture logcat**
 
-| File | Vai trò |
+| File | Purpose |
 |---|---|
-| `build_apk.sh` | Script chính (logic) |
-| `apk.config` | Cấu hình: chọn app, lunch target, deploy, log, test |
+| `build_apk.sh` | Core execution script (orchestration logic) |
+| `apk.config` | Project configuration (profile selection, lunch targets, deploy flags, debug tags) |
 
 ---
 
-## 1. Yêu cầu
+## 1. Prerequisites
 
-- Máy build Linux có cây AOSP, cấu trúc thư mục dạng `.../android/qssi/` (có `build/envsetup.sh`).
-- `adb` (platform-tools) có trong `PATH`.
-- Thiết bị chạy bản **`userdebug`** hoặc **`eng`**. Bản `user` không cho `adb root` / `adb remount`, script sẽ dừng.
-- Cắm **một** thiết bị adb.
-- Script có quyền chạy và dùng xuống dòng kiểu Linux (LF):
+- **Linux build host** with an initialized AOSP source tree adhering to `.../android/qssi/` (must contain `build/envsetup.sh`).
+- **ADB** (`platform-tools`) installed and accessible in `$PATH`.
+- **Target Device** running a **`userdebug`** or **`eng`** build image. Production `user` builds strictly disallow `adb root` and `adb remount` (script will safely abort).
+- Exactly **one** ADB device/DUT connected.
+- Execute permissions and Linux (LF) line endings:
   ```bash
   chmod +x build_apk.sh
-  dos2unix build_apk.sh apk.config   # chỉ cần nếu copy file từ Windows không qua git
+  dos2unix build_apk.sh apk.config   # required if files were transferred from Windows
   ```
 
 ---
 
-## 2. Bắt đầu nhanh (một workspace)
+## 2. Quick Start (Single Workspace)
 
-Đặt `build_apk.sh` + `apk.config` ở **bất kỳ đâu bên trong** thư mục `android/` của cây AOSP, rồi:
+Place `build_apk.sh` and `apk.config` anywhere inside the `android/` directory tree of your AOSP repo, then:
 
 ```bash
-vi apk.config          # chọn ACTIVE_PROJECT, sửa CONFIG_TARGET_PRODUCT / CONFIG_TARGET_BUILD_VARIANT
-./build_apk.sh --info  # kiểm tra cấu hình + trạng thái thiết bị
-./build_apk.sh         # build + deploy + reboot
+# 1. Select ACTIVE_PROJECT and set your lunch target
+nano apk.config
+
+# 2. Inspect target, module paths, and connected device info
+./build_apk.sh --info
+
+# 3. Build module, push to system partition, and reboot
+./build_apk.sh
 ```
 
-> Script tìm cây AOSP bằng cách đi ngược từ thư mục chứa nó lên đến thư mục tên `android`,
-> rồi dùng `ANDROID_TOP=<...>/android/qssi`.
+> **AOSP Discovery:** The script resolves the AOSP root by walking upwards from its directory until it finds an ancestor directory named `android`, setting `ANDROID_TOP=<...>/android/qssi`.
 
 ---
 
-## 3. Nhiều workspace với `--softlink`
+## 3. Multi-Workspace Architecture (`--softlink`)
 
-Dùng **một bản script gốc** cho nhiều cây AOSP (nhiều workspace / nhánh). Mỗi workspace có config riêng.
+Maintain **a single golden copy of `build_apk.sh`** shared across multiple independent AOSP checkouts, release branches, or workspaces. Each workspace maintains its own standalone `apk.config`.
 
 ```
-d:/code/telua_skill/.../build/          ← bản gốc (sửa ở đây)
+d:/code/telua_skill/.../build/          ← Master Repository (edit logic here)
 ├── build_apk.sh
-└── apk.config                          ← mẫu
+└── apk.config                          ← Configuration Template
 
 ~/ws_main/android/qssi/tools/
-├── build_apk.sh  -> (symlink về bản gốc)
-├── apk.config        (ACTIVE_PROJECT="oem_service", lunch target A)
-├── OemService.apk    (APK build ra nằm ở đây)
+├── build_apk.sh  -> (symlink to master build_apk.sh)
+├── apk.config        (ACTIVE_PROJECT="oem_service", target A)
+├── OemService.apk    (Build output artifact copied here)
 └── deployment_log.txt
 
 ~/ws_release/android/qssi/tools/
-├── build_apk.sh  -> (symlink về bản gốc)
-├── apk.config        (ACTIVE_PROJECT="car_audio", lunch target B)
+├── build_apk.sh  -> (symlink to master build_apk.sh)
+├── apk.config        (ACTIVE_PROJECT="car_audio", target B)
 └── ...
 ```
 
-### Cài vào một workspace
+### Installing to a Workspace
+
+Run `--softlink <path>` from the master script:
 
 ```bash
-# Chạy từ bản gốc; thư mục đích phải tồn tại và nằm trong cây android/
+# Target directory must exist and reside inside the target 'android/' tree
 mkdir -p ~/ws_main/android/qssi/tools
 ./build_apk.sh --softlink ~/ws_main/android/qssi/tools
 
@@ -72,153 +78,193 @@ mkdir -p ~/ws_release/android/qssi/tools
 ./build_apk.sh --softlink ~/ws_release/android/qssi/tools
 ```
 
-`--softlink <path>` sẽ:
+`--softlink <path>` automatically performs:
+1. Creates `<path>/build_apk.sh` as a **symbolic link** pointing to the canonical master script.
+2. **Copies** `apk.config` adjacent to the calling script into `<path>/apk.config`.
+3. Safely **overwrites** existing links and files if present.
 
-1. Tạo `<path>/build_apk.sh` là **symlink** về script gốc.
-2. **Copy** `apk.config` (file cạnh script đang chạy) sang `<path>/apk.config`.
-3. **Ghi đè** nếu hai file đã tồn tại.
-
-### Dùng trong từng workspace
+### Working Inside Each Workspace
 
 ```bash
 cd ~/ws_main/android/qssi/tools
-vi apk.config            # ACTIVE_PROJECT="oem_service", lunch target A
+nano apk.config          # configure ACTIVE_PROJECT="oem_service", target A
 ./build_apk.sh --info
 ./build_apk.sh
 
 cd ~/ws_release/android/qssi/tools
-vi apk.config            # ACTIVE_PROJECT="car_audio", lunch target B
+nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 ./build_apk.sh
 ```
 
-### Vì sao cách này hoạt động
+### Why This Architecture Works
+- **Centralized Logic Updates:** Fixes and enhancements made to master `build_apk.sh` propagate instantly to every linked workspace without manual syncing.
+- **Isolated Per-Project Configs:** Each workspace independently manages its `ACTIVE_PROJECT`, lunch target, CPU threads, and debug tags.
+- **Context-Aware Path Resolution:** The script detects the `android/` root relative to the **location of the symlink**, not the master script. Executing the link in `ws_main` builds `ws_main`.
+- **Isolated Artifacts:** Generated APKs and `deployment_log.txt` are created locally inside the workspace tools directory.
 
-- **Script dùng chung**: sửa bản gốc một lần → mọi workspace dùng bản mới ngay.
-- **Config riêng**: mỗi workspace có `ACTIVE_PROJECT`, lunch target, debug tag… riêng.
-- **Đúng cây AOSP**: script tìm `apk.config` và thư mục `android/` theo **vị trí của link**, không phải file gốc. Chạy link trong `ws_main` → build `ws_main`.
-- **Output tách riêng**: APK và `deployment_log.txt` nằm trong thư mục của link.
-
-### Lưu ý
-
-- Chạy lại `--softlink` vào cùng thư mục sẽ **ghi đè `apk.config`** của workspace đó. Backup trước nếu đã sửa.
-- Biến mới thêm vào `apk.config` gốc **không tự có** trong các bản copy cũ. Script vẫn chạy nhờ giá trị mặc định; muốn đổi thì thêm tay vào bản copy.
-- Đặt link **ngoài** thư mục `android/` thì script cảnh báo và build sẽ không tìm thấy cây AOSP.
-- Không deploy từ hai workspace cùng lúc lên cùng một thiết bị.
+### Important Caveats
+- Re-running `--softlink` against an existing directory will **overwrite `apk.config`** in that directory. Back up any customized config beforehand.
+- New variables added to the master `apk.config` will not automatically backport to existing copies. The script relies on defaults (`${VAR:-...}`), but manual addition is needed to customize new flags.
+- Symlinks placed outside an `android/` directory tree will trigger a warning and will fail to resolve `ANDROID_TOP`.
+- Do not run deployments concurrently from two workspaces targeting the same physical device.
 
 ---
 
-## 4. Tùy chọn dòng lệnh
+## 4. Command Line Options
 
-| Tùy chọn | Ý nghĩa |
+| Option | Description |
 |---|---|
-| *(không có)* | Build + deploy (nếu `ENABLE_DEPLOY="true"`) + reboot đầy đủ |
-| `--info` | In cấu hình, module, đường dẫn, trạng thái thiết bị rồi thoát |
-| `--start-deploy true\|false` | Ghi đè `ENABLE_DEPLOY` trong config |
-| `--no-reboot` | Restart nhanh framework (`stop && start`, ~10–20s) thay vì reboot cả máy |
-| `--softlink <path>` | Symlink script + copy config vào `<path>` (xem mục 3) |
-| `--test-mode true\|false` | Chạy test script thay vì build |
-| `-h`, `--help` | Trợ giúp |
+| *(none)* | Full cycle: Build + Deploy (if `ENABLE_DEPLOY="true"`) + Full Device Reboot |
+| `--info` | Displays project info, lunch target, paths, and ADB device state, then exits |
+| `--start-deploy true\|false` | Overrides `ENABLE_DEPLOY` defined in `apk.config` |
+| `--no-reboot` | Fast runtime restart (`stop && start`, ~10–15s) instead of full device reboot |
+| `--softlink <path>` | Creates symlink to `build_apk.sh` and copies `apk.config` to `<path>` |
+| `--test-mode true\|false` | Runs unit test suite instead of compiling the APK |
+| `-h`, `--help` | Displays help message and exits |
 
-Ví dụ:
-
+#### Usage Examples:
 ```bash
-./build_apk.sh --start-deploy false   # chỉ build, không deploy
-./build_apk.sh --no-reboot            # deploy nhanh khi chỉ sửa code Java
-./build_apk.sh --test-mode true       # chạy test
+./build_apk.sh --start-deploy false   # Compile APK only, do not push to device
+./build_apk.sh --no-reboot            # Fast deploy after editing Java source files
+./build_apk.sh --test-mode true       # Execute project test runner
 ```
 
-> **Khi nào không dùng `--no-reboot`:** khi thay đổi `AndroidManifest.xml`, quyền (permission),
-> SELinux policy, hoặc thêm app mới. Lúc đó nên reboot đầy đủ.
+> **When to avoid `--no-reboot`:** Perform a full device reboot if you modified `AndroidManifest.xml` (permissions, exported components, new services), SELinux `.te` policies, or added a brand new system app.
 
 ---
 
-## 5. Cấu hình `apk.config`
+## 5. Configuration Reference (`apk.config`)
 
-### 5.1 Chọn app (`ACTIVE_PROJECT`)
+### 5.1 Project Profiles (`ACTIVE_PROJECT`)
 
 ```bash
 ACTIVE_PROJECT="oem_service"   # "oem_service" | "car_audio" | "vehicle_service"
 ```
 
-Mỗi profile trong khối `case` định nghĩa:
+Each profile case defines the module parameters:
 
-| Biến | Ý nghĩa |
+| Variable | Description |
 |---|---|
-| `MODULE_NAME` | Tên module để build (`m <MODULE_NAME>`). Lấy từ `name:` trong `Android.bp` hoặc `LOCAL_PACKAGE_NAME` trong `Android.mk`. Bỏ trống → dùng tên APK bỏ `.apk` |
-| `SOURCE_CODE_RELATIVE_PATH` | Thư mục source, tính từ `ANDROID_TOP` |
-| `APK_OUTPUT_RELATIVE_PATH` | Thư mục chứa APK sau build, tính từ `ANDROID_TOP` (**bị xóa trước mỗi lần build**) |
-| `APK_FILE_NAME` | Tên file APK |
-| `APK_DEPLOY_PATH` | Thư mục trên thiết bị, ví dụ `/system/priv-app/OemService` |
-| `DEFAULT_LOGCAT_FILTER` | Regex lọc logcat mặc định của profile |
-| `DEFAULT_DEBUG_LOG_TAGS` | Danh sách tag bật DEBUG mặc định của profile |
+| `MODULE_NAME` | AOSP compilation module identifier passed to `m <MODULE_NAME>`. Corresponds to `name:` in `Android.bp` or `LOCAL_PACKAGE_NAME` in `Android.mk`. If omitted, defaults to `${APK_FILE_NAME%.apk}` |
+| `SOURCE_CODE_RELATIVE_PATH` | Path to module source directory relative to `ANDROID_TOP` (see details below) |
+| `APK_OUTPUT_RELATIVE_PATH` | Target output directory relative to `ANDROID_TOP` (**cleaned before each build**) |
+| `APK_FILE_NAME` | Expected output binary filename (e.g., `OemService.apk`) |
+| `APK_DEPLOY_PATH` | Destination system directory on target device (e.g., `/system/priv-app/OemService`) |
+| `DEFAULT_LOGCAT_FILTER` | Default regex filter for logcat capture |
+| `DEFAULT_DEBUG_LOG_TAGS` | Default log tags to enable at `DEBUG` level for this service |
 
-Thêm app mới: copy một khối `"..." ) ... ;;`, đổi tên và các giá trị, rồi đặt `ACTIVE_PROJECT` theo tên mới.
+#### 💡 Source Code Directory Note (`SOURCE_CODE_RELATIVE_PATH`):
+The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build and manifest definition files:
+* **`Android.bp` (Soong build system):**
+  Defines the module via `android_app { name: "OemService", srcs: [...], privileged: true }`. The `name` attribute is your `MODULE_NAME`.
+* **`Android.mk` (GNU Make system):**
+  Defines `LOCAL_PACKAGE_NAME := OemService` or `LOCAL_MODULE := OemService`.
+* **`AndroidManifest.xml`:**
+  Defines package name, shared user IDs (`android:sharedUserId="android.uid.system"`), system permissions, and services. Changes here require a full device reboot.
 
-### 5.2 Môi trường build
+*To add a new service profile:* Copy an existing `"..." ) ... ;;` case block, update the paths, and set `ACTIVE_PROJECT` to your new profile name.
 
-| Biến | Ý nghĩa |
+---
+
+### 5.2 Build Environment
+
+| Variable | Description |
 |---|---|
-| `CONFIG_TARGET_PRODUCT` | Product cho `lunch`, ví dụ `abc_xyz_in` |
-| `CONFIG_TARGET_BUILD_VARIANT` | `userdebug` hoặc `eng` |
-| `BUILD_JOBS` | Số luồng build. Để `""` → tự dùng `nproc` (mặc định 8 nếu không có `nproc`) |
+| `CONFIG_TARGET_PRODUCT` | Target product for `lunch` (e.g., `abc_xyz_in`) |
+| `CONFIG_TARGET_BUILD_VARIANT` | Target build variant (`userdebug` or `eng`) |
+| `BUILD_JOBS` | Parallel compilation threads (`-j`). Leave empty `""` to auto-detect via `nproc` (fallback: 8) |
 
-> Nếu shell đã `lunch` sẵn (`TARGET_PRODUCT` đã có), script **dùng luôn môi trường đó** và bỏ qua
-> giá trị trong config.
+> **Active Shell Optimization:** If the current terminal session already has an active AOSP environment (`TARGET_PRODUCT` and `TARGET_BUILD_VARIANT` are set), the script **skips `envsetup.sh` and `lunch`** to save execution time.
 
-### 5.3 Deploy & log
+---
 
-| Biến | Mặc định | Ý nghĩa |
+### 5.3 Device Deployment & Diagnostics
+
+| Variable | Default | Description |
 |---|---|---|
-| `ENABLE_DEPLOY` | `"true"` | Có push APK lên thiết bị không |
-| `ENABLE_DEBUG_LOG` | `"true"` | Có bật mức log cho các tag không |
-| `DEBUG_LOG_LEVEL` | `"DEBUG"` | `DEBUG` hoặc `VERBOSE` |
-| `DEBUG_LOG_TAGS` | theo profile | Các tag cách nhau bởi dấu cách |
-| `ENABLE_LOGCAT` | `"false"` | Có lấy logcat sau deploy không |
-| `LOGCAT_FILTER` | theo profile | Regex `grep -E`. Để `""` → lấy toàn bộ log |
-| `LOGCAT_SETTLE_SECONDS` | `"10"` | Số giây chờ app khởi động trước khi lấy log |
+| `ENABLE_DEPLOY` | `"true"` | Enables or disables pushing APK to connected device |
+| `ENABLE_DEBUG_LOG` | `"true"` | Automatically sets debug log properties on the device |
+| `DEBUG_LOG_LEVEL` | `"DEBUG"` | Target logging level (`DEBUG` or `VERBOSE`) |
+| `DEBUG_LOG_TAGS` | profile default | Space-separated log tags (e.g., `"CarAudioService CarZones"`) |
+| `ENABLE_LOGCAT` | `"false"` | Captures post-deployment logcat to file |
+| `LOGCAT_FILTER` | profile default | Regex filter for `adb logcat -d \| grep -E` |
+| `LOGCAT_SETTLE_SECONDS` | `"10"` | Seconds to wait after restart before dumping logcat buffer |
 
-Debug log được bật bằng `setprop persist.log.tag.<TAG> <LEVEL>` (giữ qua reboot), tương ứng với
-`Log.isLoggable(TAG, Log.DEBUG)` trong code Java.
-
-### 5.4 Test
-
-| Biến | Ý nghĩa |
-|---|---|
-| `TEST_RELATIVE_PATH` | Thư mục test, tính từ thư mục chứa script (hoặc link) |
-| `TEST_BUILD_SCRIPT` | Script test trong thư mục đó |
+Debug tags are activated via persistent system properties:
+```bash
+adb shell setprop persist.log.tag.<TAG> DEBUG
+```
+This ensures `Log.isLoggable(TAG, Log.DEBUG)` returns `true` in Java code and persists across reboots.
 
 ---
 
-## 6. Script làm gì khi chạy
+### 5.4 Unit Tests
 
-1. Đọc `apk.config`, kiểm tra các biến bắt buộc.
-2. Tìm `ANDROID_TOP`, `source build/envsetup.sh` + `lunch` (nếu chưa có môi trường).
-3. *(`--test-mode true`)* chạy test rồi thoát.
-4. Xóa thư mục output cũ, chạy `m <MODULE_NAME> -j<N>`, copy APK ra cạnh script.
-5. Deploy (nếu bật):
-   1. Chờ thiết bị; dừng nếu là bản `user`.
-   2. `adb root` và xác nhận `uid=0`.
-   3. `adb remount` và **ghi thử** vào thư mục đích. Lần remount đầu (overlayfs) tự reboot rồi remount lại.
-   4. Push APK, `chmod 644`, xóa cache `oat/` cũ, `sync`.
-   5. Bật debug log tag; xóa buffer logcat (nếu `ENABLE_LOGCAT`).
-   6. Reboot và chờ `sys.boot_completed=1` — hoặc với `--no-reboot`: `stop && start` và chờ `system_server` mới + PackageManager sẵn sàng.
-6. Chờ `LOGCAT_SETTLE_SECONDS`, lưu log vào `deployment_log.txt`.
+| Variable | Description |
+|---|---|
+| `TEST_RELATIVE_PATH` | Path to test suite directory relative to script directory |
+| `TEST_BUILD_SCRIPT` | Executable test runner script (e.g., `run_unittest_test.sh`) |
 
 ---
 
-## 7. Xử lý sự cố
+## 6. Execution Lifecycle
 
-| Hiện tượng | Nguyên nhân / cách xử lý |
+When executed, `build_apk.sh` follows this strict sequential pipeline:
+
+```mermaid
+flowchart TD
+    A[main] --> B[load_and_validate_config]
+    B --> C[parse_arguments]
+    C -->|--softlink| D[install_to_project & Exit]
+    C -->|--info| E[show_info & Exit]
+    C -->|Normal flow| F[resolve_android_paths]
+    F --> G[setup_build_environment: envsetup & lunch]
+    G --> H{--test-mode?}
+    H -->|true| I[run_tests & Exit]
+    H -->|false| J[build_apk: rm old out & m module -jN]
+    J --> K{ENABLE_DEPLOY?}
+    K -->|false| Z[Success]
+    K -->|true| L[ensure_adb_remount: root & rw write test]
+    L --> M[Push APK, chmod 644, rm oat cache, sync]
+    M --> N[Set persist.log.tag properties]
+    N --> O[Clear logcat ring buffer: adb logcat -c]
+    O --> P{--no-reboot?}
+    P -->|true| Q[restart_framework: stop/start & poll new PID + PM]
+    P -->|false| R[Full reboot: wait disconnect & wait boot_completed]
+    Q --> S{ENABLE_LOGCAT?}
+    R --> S
+    S -->|true| T[capture_logs: settle delay & grep filter]
+    S -->|false| Z
+    T --> Z
+```
+
+1. **Config Validation:** Loads `apk.config` and verifies presence of all mandatory parameters.
+2. **Environment Setup:** Identifies `ANDROID_TOP`, sources `build/envsetup.sh`, and invokes `lunch`.
+3. **Module Compilation:** Cleans stale artifacts in `$DIR_OUT` and compiles specific target: `m "$MODULE_NAME" -j"$BUILD_JOBS"`. Copies the output APK to the local script folder.
+4. **Remount & Verification:** Acquires root (`id -u == 0`), runs `adb remount`, and performs an active write probe (`touch .build_apk_rw_test`). Automatically manages overlayfs/scratch initial reboot cycles if detected.
+5. **Payload Push:** Transfers APK to `$APK_DEPLOY_PATH`, enforces `chmod 644`, wipes obsolete Dalvik/ART cache (`rm -rf oat/`), and invokes `sync`.
+6. **Property Configuration:** Injects `persist.log.tag.<TAG>` settings for all configured tags.
+7. **Buffer Reset:** Executes `adb logcat -c` to flush historical log buffer.
+8. **Reboot / Restart:**
+   - *Default:* Reboots device, waits for disconnect, waits for device reconnect, and blocks until `sys.boot_completed=1`.
+   - *Fast Mode (`--no-reboot`):* Invokes `stop && start`, blocks until `system_server` acquires a new PID and `pm path android` answers.
+9. **Log Diagnostics:** Sleeps `LOGCAT_SETTLE_SECONDS`, dumps `adb logcat -d`, filters lines via regex, and saves to `deployment_log.txt`.
+
+---
+
+## 7. Troubleshooting Guide
+
+| Issue / Error | Root Cause & Resolution |
 |---|---|
-| `Could not find the 'android' root directory` | Script (hoặc link) không nằm trong cây `android/`. Đặt lại vị trí, kiểm tra bằng `--info` |
-| `Cannot find 'build/envsetup.sh'` | Cây không có dạng `android/qssi/`. `ANDROID_TOP` đang cố định là `android/qssi` |
-| `lunch` lỗi | Sai `CONFIG_TARGET_PRODUCT` / `CONFIG_TARGET_BUILD_VARIANT` |
-| `APK not found ... after build` | `MODULE_NAME` hoặc `APK_OUTPUT_RELATIVE_PATH` sai. Xem `name:` trong `Android.bp` |
-| `Device is running a 'user' build` | Flash bản `userdebug` / `eng` |
-| `adbd is not running as root` | Bản build không cho root, hoặc adb bị kẹt: `adb kill-server` rồi thử lại |
-| `... is still read-only after 'adb remount'` | Thường do verity: `adb disable-verity && adb reboot`, rồi chạy lại |
-| `error: more than one device/emulator` | Rút bớt thiết bị (script chỉ hỗ trợ một thiết bị) |
-| `Fast restart failed` | Chạy lại không có `--no-reboot` |
-| `deployment_log.txt` rỗng | Tăng `LOGCAT_SETTLE_SECONDS`, kiểm tra `LOGCAT_FILTER` và `DEBUG_LOG_TAGS` |
-| Code mới không có hiệu lực | Thay đổi cần reboot đầy đủ (manifest, quyền, SELinux) — bỏ `--no-reboot` |
-| `bad interpreter: /bin/bash^M` | File có xuống dòng Windows: `dos2unix build_apk.sh apk.config` |
+| `Could not find the 'android' root directory` | Script or symlink is outside an `android/` source tree. Verify location or inspect with `./build_apk.sh --info`. |
+| `Cannot find 'build/envsetup.sh'` | CWD does not match expected Qualcomm `android/qssi` tree. Check ancestor paths. |
+| `Failed to initialize target environment variables after lunch` | Invalid `CONFIG_TARGET_PRODUCT` or `CONFIG_TARGET_BUILD_VARIANT`. Ensure lunch target exists in lunch menu. |
+| `APK not found ... after build completed` | Mismatch between `MODULE_NAME` and `Android.bp` `name:`. Verify module name via `grep 'name:' Android.bp`. |
+| `Device is running a 'user' build! 'adb remount' is forbidden` | Target hardware has a secure production build. Flash a `userdebug` or `eng` flash image. |
+| `adbd is not running as root after 30s` | Device build restricts root or ADB daemon hung. Execute `adb kill-server && adb root` manually. |
+| `... is still read-only after 'adb remount'` | DM-verity enabled on partition. Run `adb disable-verity && adb reboot`, then re-run script. |
+| `error: more than one device/emulator` | Multiple devices/emulators connected. Disconnect secondary devices; script expects a single DUT. |
+| `Fast restart failed ... did not come back` | System service crashed on startup or failed to restart. Re-run without `--no-reboot` to trigger clean boot. |
+| `Captured log is empty` | Application didn't start within timeout or regex filter mismatched. Increase `LOGCAT_SETTLE_SECONDS` or broaden `LOGCAT_FILTER`. |
+| Newly pushed code changes not executing | Code change involves manifest, permissions, or system signatures requiring full reboot. Remove `--no-reboot`. |
+| `/bin/bash^M: bad interpreter` | Windows CRLF line endings present. Run `dos2unix build_apk.sh apk.config`. |
