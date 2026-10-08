@@ -231,8 +231,11 @@ build_apk() {
     fi
 
     cd "$SOURCE_DIR"
-    log_info "Compiling module with mm -j15..."
-    mm -j15
+    # 'mm' builds every module under the directory, including tests/androidTest,
+    # so build only the APK module (name = APK file name without .apk).
+    local module_name="${APK_FILE_NAME%.apk}"
+    log_info "Compiling module '$module_name' with m -j15..."
+    m "$module_name" -j15
 
     if [ ! -f "$APK_OUT" ]; then
         log_error "APK not found at $APK_OUT after build completed."
