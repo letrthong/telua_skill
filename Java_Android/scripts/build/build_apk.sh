@@ -378,10 +378,11 @@ main() {
         show_info
     fi
 
-    run_tests
-
     resolve_android_paths
     setup_build_environment
+
+    run_tests
+    
     build_apk
     deploy_apk
     capture_logs
