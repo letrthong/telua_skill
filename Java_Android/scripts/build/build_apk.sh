@@ -84,10 +84,14 @@ show_info() {
     echo "  AOSP Top:     ${ANDROID_TOP:-Not found}"
 
     if command -v adb >/dev/null 2>&1; then
-        local dev_state build_type
+        local dev_state build_type internal_id vendor_build_type
         dev_state=$(adb get-state 2>/dev/null || echo "offline")
         build_type=$(adb shell getprop ro.build.type 2>/dev/null | tr -d '\r')
+        internal_id=$(adb shell getprop ro.build.internal.id 2>/dev/null | tr -d '\r')
+        vendor_build_type=$(adb shell getprop ro.vendor.build.type 2>/dev/null | tr -d '\r')
         echo "  ADB Device:   $dev_state (Build: ${build_type:-unknown})"
+        echo "  Internal ID:  ${internal_id:-unknown}"
+        echo "  Vendor Build: ${vendor_build_type:-unknown}"
     else
         echo "  ADB Binary:   Not installed"
     fi
@@ -259,6 +263,15 @@ wait_for_device() {
     return 1
 }
 
+# Block until the device drops off adb after 'adb reboot', so wait_for_device
+# does not return early on the still-running old session.
+wait_for_disconnect() {
+    # Older platform-tools lack wait-for-disconnect: fall back to a short sleep.
+    if ! timeout 30 adb wait-for-disconnect 2>/dev/null; then
+        sleep 3
+    fi
+}
+
 # --- 8. Ensure ADB Remount (Handles first-time reboot requirement) ---
 # NOTE:
 # 1. Device MUST run a 'userdebug' or 'eng' build image. Production 'user' builds
@@ -291,7 +304,7 @@ ensure_adb_remount() {
         log_warn "First-time remount detected (overlayfs/scratch setup required)."
         log_info "Rebooting device now (this first-time initialization takes ~3-5 minutes)..."
         adb reboot
-        sleep 2
+        wait_for_disconnect
         if ! wait_for_device 300; then
             log_error "Device did not come back online after remount reboot. Aborting."
             exit 1
@@ -345,7 +358,7 @@ deploy_apk() {
 
     log_info "Rebooting device to apply changes..."
     adb reboot
-    sleep 1
+    wait_for_disconnect
 
     log_info "Waiting for device to come back online after reboot (approx 2-3 mins)..."
     if ! wait_for_device 300; then
@@ -378,11 +391,12 @@ main() {
         show_info
     fi
 
+    # Test scripts need ANDROID_BUILD_TOP, so set up the build env before them.
     resolve_android_paths
     setup_build_environment
 
     run_tests
-    
+
     build_apk
     deploy_apk
     capture_logs
