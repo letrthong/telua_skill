@@ -266,10 +266,38 @@ resolve_android_paths() {
     log_info "SOURCE_DIR:  $SOURCE_DIR"
 }
 
-# --- 4b. Post-Sync CLI Hook ---
-# Customize this function to run any custom CLI commands after 'repo sync' completes
-# and after the shell has moved into $ROOT_DIR/android/qssi ($ANDROID_TOP).
-# NOTE: Rebuilding the full project after repo sync can be executed here.
+# --- 4b. Post-Sync CLI Hook 1: ROOT_DIR (BEFORE entering android/qssi) ---
+# Customize this function to run CLI commands at ROOT_DIR right after repo sync finishes.
+# (e.g. BSP scripts, vendor setup, git status across repos)
+post_sync_root_cli() {
+    log_info "============================================================"
+    log_info " Running Post-Sync Hook 1: ROOT_DIR (Before android/qssi)"
+    log_info " Current Directory: $(pwd)"
+    log_info "============================================================"
+
+    if [ -n "$POST_SYNC_ROOT_COMMAND" ]; then
+        log_info "Executing root command from config: $POST_SYNC_ROOT_COMMAND"
+        local r_start
+        r_start=$(date +%s)
+        eval "$POST_SYNC_ROOT_COMMAND"
+        local r_end
+        r_end=$(date +%s)
+        local r_dur=$((r_end - r_start))
+        log_success "Root command completed in $((r_dur / 60))m $((r_dur % 60))s."
+    else
+        log_info "No POST_SYNC_ROOT_COMMAND set in $CONFIG_FILE_NAME."
+        log_info "Add custom root commands directly in post_sync_root_cli() or config."
+        # Example commands in ROOT_DIR:
+        #   ./scripts/setup_bsp.sh
+        #   git status -s
+    fi
+
+    log_success "Post-sync ROOT_DIR hook completed."
+}
+
+# --- 4c. Post-Sync CLI Hook 2: ANDROID_TOP (AFTER entering android/qssi) ---
+# Customize this function to run CLI commands after entering $ROOT_DIR/android/qssi ($ANDROID_TOP).
+# (e.g. full project rebuild, lunch, target compile)
 post_sync_cli() {
     log_info "============================================"
     log_info " Running Post-Sync Custom CLI Hook"
@@ -372,7 +400,10 @@ run_repo_sync() {
     local seconds=$((duration % 60))
     log_success "repo sync completed in ${minutes}m ${seconds}s ($duration seconds)."
 
-    # Navigate to ANDROID_TOP ($ROOT_DIR/android/qssi)
+    # 1. Run Hook 1 in ROOT_DIR (BEFORE cd to android/qssi)
+    post_sync_root_cli
+
+    # 2. Navigate to ANDROID_TOP ($ROOT_DIR/android/qssi)
     log_info "Navigating to: $ANDROID_TOP"
     if [ ! -d "$ANDROID_TOP" ]; then
         log_error "Target directory '$ANDROID_TOP' does not exist after repo sync!"
@@ -381,7 +412,7 @@ run_repo_sync() {
     cd "$ANDROID_TOP"
     log_info "Current working directory: $(pwd)"
 
-    # Run user custom CLI commands
+    # 3. Run Hook 2 in ANDROID_TOP (AFTER cd to android/qssi)
     post_sync_cli
 
     if [ "$REPO_SYNC_ONLY" = "true" ]; then

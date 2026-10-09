@@ -185,14 +185,15 @@ The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build an
 
 > **Active Shell Optimization:** If the current terminal session already has an active AOSP environment (`TARGET_PRODUCT` and `TARGET_BUILD_VARIANT` are set), the script **skips `envsetup.sh` and `lunch`** to save execution time.
 
-### 5.2b Repo Sync & Post-Sync Full Rebuild
+### 5.2b Repo Sync & Two-Stage Post-Sync CLI Hooks
 
 | Variable | Default | Description |
 |---|---|---|
 | `REPO_SYNC_JOBS` | `"4"` | Number of parallel jobs for `repo sync` (`-j4`) |
 | `REPO_SYNC_FLAGS` | `"-d -c --force-sync --no-clone-bundle --tags"` | Complete clean flags passed to `repo sync` |
 | `ENABLE_REPO_RESET` | `"false"` | Runs `repo forall -c "git reset --hard && git clean -xdf"` before sync (can also trigger via `--repo-reset`) |
-| `POST_SYNC_BUILD_COMMAND` | `""` | Optional full project rebuild command executed in `post_sync_cli()` after repo sync finishes. If empty, you can add custom CLI commands directly inside `post_sync_cli()` in `build_apk.sh`. |
+| `POST_SYNC_ROOT_COMMAND` | `""` | CLI command executed in `ROOT_DIR` right after repo sync (**BEFORE** `cd android/qssi`, e.g., BSP setup, vendor scripts) |
+| `POST_SYNC_BUILD_COMMAND` | `""` | CLI command executed in `ANDROID_TOP` (**AFTER** entering `android/qssi`, e.g., full project rebuild `m -j16`) |
 
 ---
 
