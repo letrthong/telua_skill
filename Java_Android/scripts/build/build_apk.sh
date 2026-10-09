@@ -275,17 +275,18 @@ post_sync_root_cli() {
     log_info " Current Directory: $(pwd)"
     log_info "============================================================"
 
-    if [ -n "$POST_SYNC_ROOT_COMMAND" ]; then
-        log_info "Executing root command from config: $POST_SYNC_ROOT_COMMAND"
+    local root_cmd="${REPO_POST_SYNC_ROOT_COMMAND:-$POST_SYNC_ROOT_COMMAND}"
+    if [ -n "$root_cmd" ]; then
+        log_info "Executing root command from config: $root_cmd"
         local r_start
         r_start=$(date +%s)
-        eval "$POST_SYNC_ROOT_COMMAND"
+        eval "$root_cmd"
         local r_end
         r_end=$(date +%s)
         local r_dur=$((r_end - r_start))
         log_success "Root command completed in $((r_dur / 60))m $((r_dur % 60))s."
     else
-        log_info "No POST_SYNC_ROOT_COMMAND set in $CONFIG_FILE_NAME."
+        log_info "No REPO_POST_SYNC_ROOT_COMMAND set in $CONFIG_FILE_NAME."
         log_info "Add custom root commands directly in post_sync_root_cli() or config."
         # Example commands in ROOT_DIR:
         #   ./scripts/setup_bsp.sh
@@ -306,21 +307,22 @@ post_sync_cli() {
 
     # --------------------------------------------------------------------------
     # 1. FULL PROJECT REBUILD (CẬP NHẬT CLI TẠI ĐÂY)
-    # Nếu đã cấu hình POST_SYNC_BUILD_COMMAND trong apk.config thì tự động chạy:
+    # Nếu đã cấu hình REPO_POST_SYNC_BUILD_COMMAND trong apk.config thì tự động chạy:
     # --------------------------------------------------------------------------
-    if [ -n "$POST_SYNC_BUILD_COMMAND" ]; then
+    local build_cmd="${REPO_POST_SYNC_BUILD_COMMAND:-$POST_SYNC_BUILD_COMMAND}"
+    if [ -n "$build_cmd" ]; then
         log_info "Executing full project rebuild command from config:"
-        log_info ">> $POST_SYNC_BUILD_COMMAND"
+        log_info ">> $build_cmd"
         local b_start
         b_start=$(date +%s)
-        eval "$POST_SYNC_BUILD_COMMAND"
+        eval "$build_cmd"
         local b_end
         b_end=$(date +%s)
         local b_dur=$((b_end - b_start))
         log_success "Full project rebuild completed in $((b_dur / 60))m $((b_dur % 60))s."
     else
-        log_info "No POST_SYNC_BUILD_COMMAND set in $CONFIG_FILE_NAME."
-        log_info "You can configure POST_SYNC_BUILD_COMMAND in $CONFIG_FILE_NAME"
+        log_info "No REPO_POST_SYNC_BUILD_COMMAND set in $CONFIG_FILE_NAME."
+        log_info "You can configure REPO_POST_SYNC_BUILD_COMMAND in $CONFIG_FILE_NAME"
         log_info "or insert your custom build commands directly below in this function."
     fi
 
@@ -364,7 +366,8 @@ run_repo_sync() {
     fi
 
     # Optional hard reset across all git repositories
-    if [ "$ENABLE_REPO_RESET" = "true" ]; then
+    local enable_reset="${REPO_ENABLE_RESET:-${ENABLE_REPO_RESET:-false}}"
+    if [ "$enable_reset" = "true" ]; then
         log_warn "============================================================"
         log_warn " CAUTION: Hard resetting and cleaning all repos (repo forall)!"
         log_warn " Running: repo forall -c \"git reset --hard && git clean -xdf\""
