@@ -122,6 +122,9 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | `--start-deploy true\|false` | Overrides `ENABLE_DEPLOY` defined in `apk.config` |
 | `--no-reboot` | Fast runtime restart (`stop && start`, ~10–15s) instead of full device reboot |
 | `--softlink <path>` | Creates symlink to `build_apk.sh` and copies `apk.config` to `<path>` |
+| `--repo-sync` | Executes `repo sync` from `ROOT_DIR`, navigates to `android/qssi`, and runs `post_sync_cli` before building |
+| `--repo-sync-only` | Executes `repo sync` and `post_sync_cli` only, then exits without building |
+| `--repo-reset` | Executes `repo forall -c "git reset --hard && git clean -xdf"` before `repo sync` (discards local edits) |
 | `--test-mode true\|false` | Runs unit test suite instead of compiling the APK |
 | `-h`, `--help` | Displays help message and exits |
 
@@ -129,6 +132,9 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 ```bash
 ./build_apk.sh --start-deploy false   # Compile APK only, do not push to device
 ./build_apk.sh --no-reboot            # Fast deploy after editing Java source files
+./build_apk.sh --repo-sync            # Sync repo from ROOT_DIR, then build and deploy
+./build_apk.sh --repo-sync --repo-reset # Hard reset all repos, then sync and build
+./build_apk.sh --repo-sync-only       # Sync repo and execute post_sync_cli hook only
 ./build_apk.sh --test-mode true       # Execute project test runner
 ```
 
@@ -179,6 +185,15 @@ The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build an
 
 > **Active Shell Optimization:** If the current terminal session already has an active AOSP environment (`TARGET_PRODUCT` and `TARGET_BUILD_VARIANT` are set), the script **skips `envsetup.sh` and `lunch`** to save execution time.
 
+### 5.2b Repo Sync & Post-Sync Full Rebuild
+
+| Variable | Default | Description |
+|---|---|---|
+| `REPO_SYNC_JOBS` | `"4"` | Number of parallel jobs for `repo sync` (`-j4`) |
+| `REPO_SYNC_FLAGS` | `"-d -c --force-sync --no-clone-bundle --tags"` | Complete clean flags passed to `repo sync` |
+| `ENABLE_REPO_RESET` | `"false"` | Runs `repo forall -c "git reset --hard && git clean -xdf"` before sync (can also trigger via `--repo-reset`) |
+| `POST_SYNC_BUILD_COMMAND` | `""` | Optional full project rebuild command executed in `post_sync_cli()` after repo sync finishes. If empty, you can add custom CLI commands directly inside `post_sync_cli()` in `build_apk.sh`. |
+
 ---
 
 ### 5.3 Device Deployment & Diagnostics
@@ -221,37 +236,44 @@ flowchart TD
     C -->|--softlink| D[install_to_project & Exit]
     C -->|--info| E[show_info & Exit]
     C -->|Normal flow| F[resolve_android_paths]
-    F --> G[setup_build_environment: envsetup & lunch]
-    G --> H{--test-mode?}
-    H -->|true| I[run_tests & Exit]
-    H -->|false| J[build_apk: rm old out & m module -jN]
-    J --> K{ENABLE_DEPLOY?}
-    K -->|false| Z[Success]
-    K -->|true| L[ensure_adb_remount: root & rw write test]
-    L --> M[Push APK, chmod 644, rm oat cache, sync]
-    M --> N[Set persist.log.tag properties]
-    N --> O[Clear logcat ring buffer: adb logcat -c]
-    O --> P{--no-reboot?}
-    P -->|true| Q[restart_framework: stop/start & poll new PID + PM]
-    P -->|false| R[Full reboot: wait disconnect & wait boot_completed]
-    Q --> S{ENABLE_LOGCAT?}
-    R --> S
-    S -->|true| T[capture_logs: settle delay & grep filter]
-    S -->|false| Z
-    T --> Z
+    F --> G{--repo-sync?}
+    G -->|true| H1[run_repo_sync in ROOT_DIR]
+    H1 --> H2[cd android/qssi & post_sync_cli]
+    H2 -->|--repo-sync-only| Z[Exit 0]
+    H2 --> I[setup_build_environment: envsetup & lunch]
+    G -->|false| I
+    I --> J{--test-mode?}
+    J -->|true| K[run_tests & Exit]
+    J -->|false| L[build_apk: rm old out & m module -jN]
+    L --> M{ENABLE_DEPLOY?}
+    M -->|false| Z[Success]
+    M -->|true| N[ensure_adb_remount: root & rw write test]
+    N --> O[Push APK, chmod 644, rm oat cache, sync]
+    O --> P[Set persist.log.tag properties]
+    P --> Q[Clear logcat ring buffer: adb logcat -c]
+    Q --> R{--no-reboot?}
+    R -->|true| S[restart_framework: stop/start & poll new PID + PM]
+    R -->|false| T[Full reboot: wait disconnect & wait boot_completed]
+    S --> U{ENABLE_LOGCAT?}
+    T --> U
+    U -->|true| V[capture_logs: settle delay & grep filter]
+    U -->|false| Z
+    V --> Z
 ```
 
 1. **Config Validation:** Loads `apk.config` and verifies presence of all mandatory parameters.
-2. **Environment Setup:** Identifies `ANDROID_TOP`, sources `build/envsetup.sh`, and invokes `lunch`.
-3. **Module Compilation:** Cleans stale artifacts in `$DIR_OUT` and compiles specific target: `m "$MODULE_NAME" -j"$BUILD_JOBS"`. Copies the output APK to the local script folder.
-4. **Remount & Verification:** Acquires root (`id -u == 0`), runs `adb remount`, and performs an active write probe (`touch .build_apk_rw_test`). Automatically manages overlayfs/scratch initial reboot cycles if detected.
-5. **Payload Push:** Transfers APK to `$APK_DEPLOY_PATH`, enforces `chmod 644`, wipes obsolete Dalvik/ART cache (`rm -rf oat/`), and invokes `sync`.
-6. **Property Configuration:** Injects `persist.log.tag.<TAG>` settings for all configured tags.
-7. **Buffer Reset:** Executes `adb logcat -c` to flush historical log buffer.
-8. **Reboot / Restart:**
+2. **AOSP Path Discovery:** Resolves `ROOT_DIR` and `ANDROID_TOP` (`.../android/qssi`).
+3. **Repo Sync (Optional via `--repo-sync`):** Navigates to `ROOT_DIR`, runs `repo sync` with timing benchmarks, switches into `$ANDROID_TOP`, and executes `post_sync_cli` hook.
+4. **Environment Setup:** Sources `build/envsetup.sh` and invokes `lunch` target.
+5. **Module Compilation:** Cleans stale artifacts in `$DIR_OUT` and compiles specific target: `m "$MODULE_NAME" -j"$BUILD_JOBS"`. Copies the output APK to the local script folder.
+6. **Remount & Verification:** Acquires root (`id -u == 0`), runs `adb remount`, and performs an active write probe (`touch .build_apk_rw_test`). Automatically manages overlayfs/scratch initial reboot cycles if detected.
+7. **Payload Push:** Transfers APK to `$APK_DEPLOY_PATH`, enforces `chmod 644`, wipes obsolete Dalvik/ART cache (`rm -rf oat/`), and invokes `sync`.
+8. **Property Configuration:** Injects `persist.log.tag.<TAG>` settings for all configured tags.
+9. **Buffer Reset:** Executes `adb logcat -c` to flush historical log buffer.
+10. **Reboot / Restart:**
    - *Default:* Reboots device, waits for disconnect, waits for device reconnect, and blocks until `sys.boot_completed=1`.
    - *Fast Mode (`--no-reboot`):* Invokes `stop && start`, blocks until `system_server` acquires a new PID and `pm path android` answers.
-9. **Log Diagnostics:** Sleeps `LOGCAT_SETTLE_SECONDS`, dumps `adb logcat -d`, filters lines via regex, and saves to `deployment_log.txt`.
+11. **Log Diagnostics:** Sleeps `LOGCAT_SETTLE_SECONDS`, dumps `adb logcat -d`, filters lines via regex, and saves to `deployment_log.txt`.
 
 ---
 

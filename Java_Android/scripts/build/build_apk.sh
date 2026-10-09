@@ -28,6 +28,9 @@ Options:
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
   --softlink <path>           Symlink this script + copy $CONFIG_FILE_NAME into <path> (overwrites)
+  --repo-sync                 Run 'repo sync' in ROOT_DIR, cd to android/qssi & run post_sync_cli before build
+  --repo-sync-only            Run 'repo sync' and post_sync_cli, then exit without building
+  --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' before repo sync
   --test-mode true|false     Run unit test suite instead of full build
   -h, --help, help           Display this help message and exit
 
@@ -63,6 +66,19 @@ parse_arguments() {
                 fi
                 SOFTLINK_PATH="$2"
                 shift 2
+                ;;
+            --repo-sync)
+                REPO_SYNC="true"
+                shift
+                ;;
+            --repo-sync-only)
+                REPO_SYNC="true"
+                REPO_SYNC_ONLY="true"
+                shift
+                ;;
+            --repo-reset)
+                ENABLE_REPO_RESET="true"
+                shift
                 ;;
             --test-mode)
                 if [[ "$2" != "true" && "$2" != "false" ]]; then
@@ -140,6 +156,7 @@ show_info() {
     echo "  Deploy Path:  $APK_DEPLOY_PATH"
     echo "  Logcat Filter:${LOGCAT_FILTER:-None (full)}"
     echo "  Debug Tags:   ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
+    echo "  Root Dir:     ${ROOT_DIR:-Not found}"
     echo "  AOSP Top:     ${ANDROID_TOP:-Not found (no 'android' dir above $SCRIPT_DIR)}"
 
     if command -v adb >/dev/null 2>&1; then
@@ -247,6 +264,130 @@ resolve_android_paths() {
     log_info "ROOT_DIR:    $ROOT_DIR"
     log_info "ANDROID_TOP: $ANDROID_TOP"
     log_info "SOURCE_DIR:  $SOURCE_DIR"
+}
+
+# --- 4b. Post-Sync CLI Hook ---
+# Customize this function to run any custom CLI commands after 'repo sync' completes
+# and after the shell has moved into $ROOT_DIR/android/qssi ($ANDROID_TOP).
+# NOTE: Rebuilding the full project after repo sync can be executed here.
+post_sync_cli() {
+    log_info "============================================"
+    log_info " Running Post-Sync Custom CLI Hook"
+    log_info " Current Directory: $(pwd)"
+    log_info "============================================"
+
+    # --------------------------------------------------------------------------
+    # 1. FULL PROJECT REBUILD (CẬP NHẬT CLI TẠI ĐÂY)
+    # Nếu đã cấu hình POST_SYNC_BUILD_COMMAND trong apk.config thì tự động chạy:
+    # --------------------------------------------------------------------------
+    if [ -n "$POST_SYNC_BUILD_COMMAND" ]; then
+        log_info "Executing full project rebuild command from config:"
+        log_info ">> $POST_SYNC_BUILD_COMMAND"
+        local b_start
+        b_start=$(date +%s)
+        eval "$POST_SYNC_BUILD_COMMAND"
+        local b_end
+        b_end=$(date +%s)
+        local b_dur=$((b_end - b_start))
+        log_success "Full project rebuild completed in $((b_dur / 60))m $((b_dur % 60))s."
+    else
+        log_info "No POST_SYNC_BUILD_COMMAND set in $CONFIG_FILE_NAME."
+        log_info "You can configure POST_SYNC_BUILD_COMMAND in $CONFIG_FILE_NAME"
+        log_info "or insert your custom build commands directly below in this function."
+    fi
+
+    # --------------------------------------------------------------------------
+    # 2. CUSTOM POST-SYNC CLI COMMANDS (THÊM LỆNH TÙY CHỌN TẠI ĐÂY):
+    # Ví dụ khi cần cập nhật sau này:
+    #   source build/envsetup.sh
+    #   lunch ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}
+    #   m -j$(nproc)
+    #   git status -s
+    # --------------------------------------------------------------------------
+
+    log_success "Post-sync CLI hook completed."
+}
+
+# --- 4c. Repo Sync Utility ---
+run_repo_sync() {
+    if [ "$REPO_SYNC" != "true" ]; then
+        return 0
+    fi
+
+    log_info "============================================"
+    log_info " Starting Repo Sync in ROOT_DIR"
+    log_info "============================================"
+
+    if ! command -v repo >/dev/null 2>&1; then
+        log_error "'repo' binary not found in PATH! Please ensure Google repo is installed and accessible."
+        exit 1
+    fi
+
+    if [ ! -d "$ROOT_DIR" ]; then
+        log_error "ROOT_DIR '$ROOT_DIR' does not exist!"
+        exit 1
+    fi
+
+    log_info "Navigating to ROOT_DIR: $ROOT_DIR"
+    cd "$ROOT_DIR"
+
+    if [ ! -d ".repo" ]; then
+        log_warn "No '.repo' directory found in ROOT_DIR ($ROOT_DIR). Attempting repo sync anyway..."
+    fi
+
+    # Optional hard reset across all git repositories
+    if [ "$ENABLE_REPO_RESET" = "true" ]; then
+        log_warn "============================================================"
+        log_warn " CAUTION: Hard resetting and cleaning all repos (repo forall)!"
+        log_warn " Running: repo forall -c \"git reset --hard && git clean -xdf\""
+        log_warn " All uncommitted changes and untracked files will be lost."
+        log_warn "============================================================"
+        if ! repo forall -c "git reset --hard && git clean -xdf"; then
+            log_error "'repo forall' git reset failed in $ROOT_DIR!"
+            exit 1
+        fi
+        log_success "All repositories reset and cleaned successfully."
+    fi
+
+    local jobs="${REPO_SYNC_JOBS:-4}"
+    local sync_flags="${REPO_SYNC_FLAGS:--d -c --force-sync --no-clone-bundle --tags}"
+    local start_ts
+    start_ts=$(date +%s)
+    local start_str
+    start_str=$(date '+%Y-%m-%d %H:%M:%S')
+
+    log_info "Sync started at: $start_str"
+    log_info "Executing: repo sync -j$jobs $sync_flags"
+    log_warn "NOTE: 'repo sync' can take a substantial amount of time. Please wait..."
+
+    if ! repo sync -j"$jobs" $sync_flags; then
+        log_error "repo sync failed in $ROOT_DIR!"
+        exit 1
+    fi
+
+    local end_ts
+    end_ts=$(date +%s)
+    local duration=$((end_ts - start_ts))
+    local minutes=$((duration / 60))
+    local seconds=$((duration % 60))
+    log_success "repo sync completed in ${minutes}m ${seconds}s ($duration seconds)."
+
+    # Navigate to ANDROID_TOP ($ROOT_DIR/android/qssi)
+    log_info "Navigating to: $ANDROID_TOP"
+    if [ ! -d "$ANDROID_TOP" ]; then
+        log_error "Target directory '$ANDROID_TOP' does not exist after repo sync!"
+        exit 1
+    fi
+    cd "$ANDROID_TOP"
+    log_info "Current working directory: $(pwd)"
+
+    # Run user custom CLI commands
+    post_sync_cli
+
+    if [ "$REPO_SYNC_ONLY" = "true" ]; then
+        log_success "Repo sync only requested (--repo-sync-only). Exiting without build."
+        exit 0
+    fi
 }
 
 # --- 5. Setup AOSP Build Environment ---
@@ -592,6 +733,10 @@ main() {
 
     # Test scripts need ANDROID_BUILD_TOP, so set up the build env before them.
     resolve_android_paths || exit 1
+
+    # Run repo sync in ROOT_DIR, then cd to android/qssi and run post_sync_cli
+    run_repo_sync
+
     setup_build_environment
 
     run_tests
