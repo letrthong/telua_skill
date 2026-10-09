@@ -82,9 +82,11 @@ mkdir -p ~/ws_main/android/qssi/tools
 ```
 
 `--softlink [path]` automatically performs:
-1. Creates `<path>/build_apk.sh` as a **symbolic link** pointing to the canonical master script.
-2. **Copies** `apk.config` adjacent to the calling script into `<path>/apk.config`.
-3. Safely **overwrites** existing links and files if present.
+1. Validates that the target path is inside an AOSP tree (under an `android/` directory).
+2. Automatically creates the destination directory (`mkdir -p`) if its parent directory exists.
+3. Creates `<path>/build_apk.sh` as a **symbolic link** pointing to the canonical master script.
+4. **Copies** `apk.config` adjacent to the calling script into `<path>/apk.config`.
+5. Safely **overwrites** existing links and files if present.
 
 ### Working Inside Each Workspace
 

@@ -120,8 +120,20 @@ install_to_project() {
     local real_script real_target
 
     if [ ! -d "$target_dir" ]; then
-        log_error "Target directory does not exist: $target_dir"
-        exit 1
+        local parent_dir
+        parent_dir="$(dirname "$target_dir")"
+        if [ -d "$parent_dir" ]; then
+            log_info "Target directory '$target_dir' does not exist, but parent directory exists."
+            log_info "Automatically creating target directory: mkdir -p '$target_dir'"
+            if ! mkdir -p "$target_dir"; then
+                log_error "Failed to create target directory: $target_dir"
+                exit 1
+            fi
+        else
+            log_error "Target directory '$target_dir' does not exist (parent directory '$parent_dir' also does not exist)!"
+            log_error "Please check the path for typos or create it manually: mkdir -p '$target_dir'"
+            exit 1
+        fi
     fi
 
     # Resolve the ORIGINAL script, even if this run was started via a symlink.
@@ -171,7 +183,15 @@ show_info() {
     echo "  Repo Reset:       ${REPO_ENABLE_RESET:-${ENABLE_REPO_RESET:-false}}"
     echo "  Repo Post Root:   ${REPO_POST_SYNC_ROOT_COMMAND:-${POST_SYNC_ROOT_COMMAND:-None}}"
     echo "  Repo Post Top:    ${REPO_POST_SYNC_BUILD_COMMAND:-${POST_SYNC_BUILD_COMMAND:-None}}"
-    echo "  Softlink Target:  ${SOFTLINK_TARGET_PATH:-Not configured (provide path via CLI)}"
+    if [ -n "$SOFTLINK_TARGET_PATH" ]; then
+        if [ -d "$SOFTLINK_TARGET_PATH" ]; then
+            echo "  Softlink Target:  $SOFTLINK_TARGET_PATH [EXISTS]"
+        else
+            echo "  Softlink Target:  $SOFTLINK_TARGET_PATH [NOT FOUND - will auto-create if parent exists]"
+        fi
+    else
+        echo "  Softlink Target:  Not configured (provide path via CLI)"
+    fi
 
     if command -v adb >/dev/null 2>&1; then
         local dev_state build_type internal_id vendor_build_type
