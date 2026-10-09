@@ -27,7 +27,8 @@ Options:
   --info                      Display target, build config, and ADB device info
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
-  --softlink <path>           Symlink this script + copy $CONFIG_FILE_NAME into <path> (overwrites)
+  --softlink [path]           Symlink this script + copy $CONFIG_FILE_NAME into [path] (overwrites)
+                              (defaults to SOFTLINK_TARGET_PATH from $CONFIG_FILE_NAME if omitted)
   --repo-sync                 Run 'repo sync' in ROOT_DIR, cd to android/qssi & run post_sync_cli before build
   --repo-sync-only            Run 'repo sync' and post_sync_cli, then exit without building
   --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' before repo sync
@@ -60,12 +61,19 @@ parse_arguments() {
                 shift
                 ;;
             --softlink)
-                if [ -z "$2" ]; then
-                    log_error "--softlink requires a target directory path"
-                    exit 1
+                if [ -n "$2" ] && [[ "$2" != --* ]]; then
+                    SOFTLINK_PATH="$2"
+                    shift 2
+                else
+                    SOFTLINK_PATH="${SOFTLINK_TARGET_PATH:-$DEFAULT_SOFTLINK_PATH}"
+                    if [ -z "$SOFTLINK_PATH" ]; then
+                        log_error "No target directory path provided for --softlink!"
+                        log_error "Usage: $0 --softlink <project_path>"
+                        log_error "Or configure 'SOFTLINK_TARGET_PATH' in $CONFIG_FILE_NAME"
+                        exit 1
+                    fi
+                    shift 1
                 fi
-                SOFTLINK_PATH="$2"
-                shift 2
                 ;;
             --repo-sync)
                 REPO_SYNC="true"
@@ -163,6 +171,7 @@ show_info() {
     echo "  Repo Reset:       ${REPO_ENABLE_RESET:-${ENABLE_REPO_RESET:-false}}"
     echo "  Repo Post Root:   ${REPO_POST_SYNC_ROOT_COMMAND:-${POST_SYNC_ROOT_COMMAND:-None}}"
     echo "  Repo Post Top:    ${REPO_POST_SYNC_BUILD_COMMAND:-${POST_SYNC_BUILD_COMMAND:-None}}"
+    echo "  Softlink Target:  ${SOFTLINK_TARGET_PATH:-Not configured (provide path via CLI)}"
 
     if command -v adb >/dev/null 2>&1; then
         local dev_state build_type internal_id vendor_build_type

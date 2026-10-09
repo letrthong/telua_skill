@@ -70,18 +70,18 @@ Maintain **a single golden copy of `build_apk.sh`** shared across multiple indep
 
 ### Installing to a Workspace
 
-Run `--softlink <path>` from the master script:
+You can either pass the target path directly via CLI, or configure `SOFTLINK_TARGET_PATH` inside `apk.config`:
 
 ```bash
-# Target directory must exist and reside inside the target 'android/' tree
+# Option A: Specify destination directly
 mkdir -p ~/ws_main/android/qssi/tools
 ./build_apk.sh --softlink ~/ws_main/android/qssi/tools
 
-mkdir -p ~/ws_release/android/qssi/tools
-./build_apk.sh --softlink ~/ws_release/android/qssi/tools
+# Option B: Pre-configure SOFTLINK_TARGET_PATH="/home/user/ws_main/android/qssi/tools" in apk.config
+./build_apk.sh --softlink
 ```
 
-`--softlink <path>` automatically performs:
+`--softlink [path]` automatically performs:
 1. Creates `<path>/build_apk.sh` as a **symbolic link** pointing to the canonical master script.
 2. **Copies** `apk.config` adjacent to the calling script into `<path>/apk.config`.
 3. Safely **overwrites** existing links and files if present.
@@ -121,7 +121,7 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | `--info` | Displays project info, lunch target, paths, and ADB device state, then exits |
 | `--start-deploy true\|false` | Overrides `ENABLE_DEPLOY` defined in `apk.config` |
 | `--no-reboot` | Fast runtime restart (`stop && start`, ~10–15s) instead of full device reboot |
-| `--softlink <path>` | Creates symlink to `build_apk.sh` and copies `apk.config` to `<path>` |
+| `--softlink [path]` | Creates symlink to `build_apk.sh` and copies `apk.config` to `[path]` (falls back to `SOFTLINK_TARGET_PATH` from `apk.config` if omitted) |
 | `--repo-sync` | Executes `repo sync` from `ROOT_DIR`, navigates to `android/qssi`, and runs `post_sync_cli` before building |
 | `--repo-sync-only` | Executes `repo sync` and `post_sync_cli` only, then exits without building |
 | `--repo-reset` | Executes `repo forall -c "git reset --hard && git clean -xdf"` before `repo sync` (discards local edits) |
@@ -172,6 +172,12 @@ The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build an
   Defines package name, shared user IDs (`android:sharedUserId="android.uid.system"`), system permissions, and services. Changes here require a full device reboot.
 
 *To add a new service profile:* Copy an existing `"..." ) ... ;;` case block, update the paths, and set `ACTIVE_PROJECT` to your new profile name.
+
+### 5.1b Softlink Target Workspace
+
+| Variable | Default | Description |
+|---|---|---|
+| `SOFTLINK_TARGET_PATH` | `""` | Default workspace destination when running `./build_apk.sh --softlink` without specifying `<project_path>` via CLI |
 
 ---
 
