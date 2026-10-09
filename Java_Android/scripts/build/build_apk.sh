@@ -30,8 +30,9 @@ Options:
   --softlink [path]           Symlink this script + copy $CONFIG_FILE_NAME into [path] (overwrites)
                               (defaults to SOFTLINK_TARGET_PATH from $CONFIG_FILE_NAME if omitted)
   --repo-sync                 Run 'repo sync' in ROOT_DIR, cd to android/qssi & run post_sync_cli before build
-  --repo-sync-only            Run 'repo sync' and post_sync_cli, then exit without building
-  --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' before repo sync
+  --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' and exit (no sync, no build)
+  --git-diff                  Run 'git diff HEAD^ HEAD' in this script's git repo and exit
+  --git-amend                 Run 'git commit --amend --no-edit' (staged changes only) in this script's git repo and exit
   --test-mode true|false     Run unit test suite instead of full build
   -h, --help, help           Display this help message and exit
 
@@ -79,14 +80,16 @@ parse_arguments() {
                 REPO_SYNC="true"
                 shift
                 ;;
-            --repo-sync-only)
-                REPO_SYNC="true"
-                REPO_SYNC_ONLY="true"
+            --repo-reset)
+                REPO_RESET="true"
                 shift
                 ;;
-            --repo-reset)
-                REPO_ENABLE_RESET="true"
-                ENABLE_REPO_RESET="true"
+            --git-diff)
+                GIT_DIFF="true"
+                shift
+                ;;
+            --git-amend)
+                GIT_AMEND="true"
                 shift
                 ;;
             --test-mode)
@@ -180,7 +183,6 @@ show_info() {
     echo "  Root Dir:         ${ROOT_DIR:-Not found}"
     echo "  AOSP Top:         ${ANDROID_TOP:-Not found (no 'android' dir above $SCRIPT_DIR)}"
     echo "  Repo Sync Jobs:   ${REPO_SYNC_JOBS:-4}"
-    echo "  Repo Reset:       ${REPO_ENABLE_RESET:-${ENABLE_REPO_RESET:-false}}"
     echo "  Repo Post Root:   ${REPO_POST_SYNC_ROOT_COMMAND:-${POST_SYNC_ROOT_COMMAND:-None}}"
     echo "  Repo Post Top:    ${REPO_POST_SYNC_BUILD_COMMAND:-${POST_SYNC_BUILD_COMMAND:-None}}"
     if [ -n "$SOFTLINK_TARGET_PATH" ]; then
@@ -372,7 +374,66 @@ post_sync_cli() {
     log_success "Post-sync CLI hook completed."
 }
 
-# --- 4c. Repo Sync Utility ---
+# --- 4c. Git Diff Utility (--git-diff: show last commit, then exit) ---
+run_git_diff() {
+    if [ "$GIT_DIFF" != "true" ]; then
+        return 0
+    fi
+
+    log_info "Running in $SCRIPT_DIR: git diff HEAD^ HEAD"
+    if ! git -C "$SCRIPT_DIR" diff HEAD^ HEAD; then
+        log_error "'git diff HEAD^ HEAD' failed (is $SCRIPT_DIR a git repo with at least 2 commits?)"
+        exit 1
+    fi
+    exit 0
+}
+
+# --- 4c. Git Amend Utility (--git-amend: amend last commit, then exit) ---
+run_git_amend() {
+    if [ "$GIT_AMEND" != "true" ]; then
+        return 0
+    fi
+
+    log_info "Running in $SCRIPT_DIR: git commit --amend --no-edit"
+    if ! git -C "$SCRIPT_DIR" commit --amend --no-edit; then
+        log_error "'git commit --amend --no-edit' failed (is $SCRIPT_DIR a git repo with a commit to amend?)"
+        exit 1
+    fi
+    log_success "Last commit amended."
+    exit 0
+}
+
+# --- 4c. Repo Reset Utility (--repo-reset: reset only, then exit) ---
+run_repo_reset() {
+    if [ "$REPO_RESET" != "true" ]; then
+        return 0
+    fi
+
+    if ! command -v repo >/dev/null 2>&1; then
+        log_error "'repo' binary not found in PATH! Please ensure Google repo is installed and accessible."
+        exit 1
+    fi
+
+    if [ ! -d "$ROOT_DIR" ]; then
+        log_error "ROOT_DIR '$ROOT_DIR' does not exist!"
+        exit 1
+    fi
+
+    cd "$ROOT_DIR"
+    log_warn "============================================================"
+    log_warn " CAUTION: Hard resetting and cleaning all repos (repo forall)!"
+    log_warn " Running in $ROOT_DIR: repo forall -c \"git reset --hard && git clean -xdf\""
+    log_warn " All uncommitted changes and untracked files will be lost."
+    log_warn "============================================================"
+    if ! repo forall -c "git reset --hard && git clean -xdf"; then
+        log_error "'repo forall' git reset failed in $ROOT_DIR!"
+        exit 1
+    fi
+    log_success "All repositories reset and cleaned successfully. Exiting (no sync, no build)."
+    exit 0
+}
+
+# --- 4d. Repo Sync Utility ---
 run_repo_sync() {
     if [ "$REPO_SYNC" != "true" ]; then
         return 0
@@ -397,21 +458,6 @@ run_repo_sync() {
 
     if [ ! -d ".repo" ]; then
         log_warn "No '.repo' directory found in ROOT_DIR ($ROOT_DIR). Attempting repo sync anyway..."
-    fi
-
-    # Optional hard reset across all git repositories
-    local enable_reset="${REPO_ENABLE_RESET:-${ENABLE_REPO_RESET:-false}}"
-    if [ "$enable_reset" = "true" ]; then
-        log_warn "============================================================"
-        log_warn " CAUTION: Hard resetting and cleaning all repos (repo forall)!"
-        log_warn " Running: repo forall -c \"git reset --hard && git clean -xdf\""
-        log_warn " All uncommitted changes and untracked files will be lost."
-        log_warn "============================================================"
-        if ! repo forall -c "git reset --hard && git clean -xdf"; then
-            log_error "'repo forall' git reset failed in $ROOT_DIR!"
-            exit 1
-        fi
-        log_success "All repositories reset and cleaned successfully."
     fi
 
     local jobs="${REPO_SYNC_JOBS:-4}"
@@ -451,11 +497,6 @@ run_repo_sync() {
 
     # 3. Run Hook 2 in ANDROID_TOP (AFTER cd to android/qssi)
     post_sync_cli
-
-    if [ "$REPO_SYNC_ONLY" = "true" ]; then
-        log_success "Repo sync only requested (--repo-sync-only). Exiting without build."
-        exit 0
-    fi
 }
 
 # --- 5. Setup AOSP Build Environment ---
@@ -474,11 +515,15 @@ setup_build_environment() {
     fi
 
     log_info "Initializing environment: source build/envsetup.sh"
+    # envsetup.sh/lunch return non-zero on harmless warnings (e.g. symlink creation),
+    # which 'set -e' would turn into an abort; success is verified via TARGET_PRODUCT below.
+    set +e
     source build/envsetup.sh
 
     local target="${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
     log_info "Running lunch target: $target"
     lunch "$target"
+    set -e
 
     if [[ -z "$TARGET_PRODUCT" || -z "$TARGET_BUILD_VARIANT" ]]; then
         log_error "Failed to initialize target environment variables after lunch."
@@ -799,8 +844,13 @@ main() {
         show_info
     fi
 
+    run_git_diff
+    run_git_amend
+
     # Test scripts need ANDROID_BUILD_TOP, so set up the build env before them.
     resolve_android_paths || exit 1
+
+    run_repo_reset
 
     # Run repo sync in ROOT_DIR, then cd to android/qssi and run post_sync_cli
     run_repo_sync
