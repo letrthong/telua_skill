@@ -77,6 +77,7 @@ parse_arguments() {
                 shift
                 ;;
             --repo-reset)
+                REPO_ENABLE_RESET="true"
                 ENABLE_REPO_RESET="true"
                 shift
                 ;;
