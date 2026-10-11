@@ -128,7 +128,7 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 |---|---|
 | *(none)* | Full cycle: Build + Deploy (if `ENABLE_DEPLOY="true"`) + Full Device Reboot |
 | `--config <path>` | Explicitly specifies path to `apk.config` to load |
-| `--init` | Copies golden template `apk.config` into current project directory (`$PWD`) |
+| `--init` | Initializes `apk.config` in current directory (`$PWD`) by decrypting `enc_apk.config` with password (or copying plain template) |
 | `--install` | Adds or updates alias `telua` in `~/.bashrc` pointing to `build_apk.sh`, and sources `~/.bashrc` |
 | `-v`, `--version` | Displays script version, release update date, and exits |
 | `--info` | Displays general build configuration followed by platform-specific target info (Android / QNX), then exits |

@@ -55,7 +55,8 @@ Usage: $0 [OPTIONS]
 
 Options:
   --config <path>             Explicitly specify path to apk.config file
-  --init                      Copy template apk.config into current directory ($PWD)
+  --init                      Initialize apk.config in current directory ($PWD)
+                              (prompts for password to decrypt enc_apk.config if present)
   --install                   Install/update 'telua' alias in ~/.bashrc and source it
   -v, --version               Display script version and last update date, then exit
   --info                      Display general build config and platform target info
@@ -295,11 +296,8 @@ install_bashrc_alias() {
 init_project_config() {
     local target_config="$PWD/$CONFIG_FILE_NAME"
     local template_config="$SCRIPT_DIR/$CONFIG_FILE_NAME"
-
-    if [ ! -f "$template_config" ]; then
-        log_error "Template configuration file '$template_config' not found!"
-        exit 1
-    fi
+    local enc_config="$SCRIPT_DIR/enc_apk.config"
+    local crypto_script="$SCRIPT_DIR/config_crypto.py"
 
     if [ "$PWD" = "$SCRIPT_DIR" ]; then
         log_warn "Already in master script directory ($PWD). Template config is here."
@@ -308,17 +306,47 @@ init_project_config() {
 
     if [ -f "$target_config" ]; then
         log_warn "'$CONFIG_FILE_NAME' already exists in current directory ($PWD)."
-        read -r -p "Do you want to overwrite it with template config? (y/N): " confirm
+        read -r -p "Do you want to overwrite it? (y/N): " confirm
         if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
             log_info "Aborted. Existing $CONFIG_FILE_NAME preserved."
             exit 0
         fi
     fi
 
-    cp "$template_config" "$target_config"
-    log_success "Initialized: $target_config"
-    log_info "Next: edit $CONFIG_FILE_NAME, then run: telua --info"
-    exit 0
+    # Case 1: Decrypt from enc_apk.config using config_crypto.py
+    if [ -f "$enc_config" ] && [ -f "$crypto_script" ]; then
+        echo -n -e "\033[1;33m[PROMPT]\033[0m Enter password to decrypt enc_apk.config (Press Enter to use default config): "
+        local input_pw
+        read -r -s input_pw
+        echo ""
+
+        if [ -z "$input_pw" ]; then
+            log_info "No password entered. Copying default $CONFIG_FILE_NAME..."
+        else
+            log_info "Decrypting template using config_crypto.py..."
+            if echo "$input_pw" | python3 "$crypto_script" decrypt -i "$enc_config" -o "$target_config" --force - 2>/dev/null; then
+                unset input_pw
+                log_success "Successfully decrypted and created: $target_config"
+                log_info "Next: edit $CONFIG_FILE_NAME, then run: telua --info"
+                exit 0
+            else
+                unset input_pw
+                log_warn "Decryption failed (incorrect password)! Falling back to default $CONFIG_FILE_NAME..."
+            fi
+        fi
+        unset input_pw
+    fi
+
+    # Case 2: Copy default plain template config
+    if [ -f "$template_config" ]; then
+        cp "$template_config" "$target_config"
+        log_success "Initialized with default template: $target_config"
+        log_info "Next: edit $CONFIG_FILE_NAME, then run: telua --info"
+        exit 0
+    fi
+
+    log_error "Neither '$enc_config' nor '$template_config' was found in $SCRIPT_DIR!"
+    exit 1
 }
 
 # --- 1c. Install into a project directory (--softlink <path>) ---
