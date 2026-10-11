@@ -86,6 +86,7 @@ parse_arguments() {
                     log_error "--start-deploy requires 'true' or 'false', got '$2'"
                     exit 1
                 fi
+                CLI_START_DEPLOY="$2"
                 ENABLE_DEPLOY="$2"
                 shift 2
                 ;;
@@ -280,9 +281,14 @@ show_info_general() {
 }
 
 show_info_android() {
+    local deploy_enabled="${CLI_START_DEPLOY:-${ENABLE_ANDROID_DEPLOY:-${ENABLE_DEPLOY:-true}}}"
+    local logcat_enabled="${ENABLE_ANDROID_LOGCAT:-${ENABLE_LOGCAT:-false}}"
+
     echo -e "\n\033[1;32m=== 2. ANDROID TARGET INFO (ADB) ===\033[0m"
     echo "  Platform:         android"
+    echo "  Deploy Enabled:   $deploy_enabled"
     echo "  Deploy Path:      $APK_DEPLOY_PATH"
+    echo "  Logcat Enabled:   $logcat_enabled"
     echo "  Logcat Filter:    ${LOGCAT_FILTER:-None (full)}"
     echo "  Debug Tags:       ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
     if command -v adb >/dev/null 2>&1; then
@@ -300,11 +306,16 @@ show_info_android() {
 }
 
 show_info_qnx() {
+    local deploy_enabled="${CLI_START_DEPLOY:-${ENABLE_QNX_DEPLOY:-${ENABLE_DEPLOY:-false}}}"
+    local log_enabled="${ENABLE_QNX_LOG:-${ENABLE_LOGCAT:-false}}"
+
     echo -e "\n\033[1;33m=== 2. QNX TARGET INFO (Hypervisor / Guest VM) ===\033[0m"
     echo "  Platform:         qnx"
+    echo "  Deploy Enabled:   $deploy_enabled"
     echo "  Deploy Path:      ${QNX_TARGET_DIR:-${QNX_DEPLOY_PATH:-${APK_DEPLOY_PATH:-N/A}}}"
     echo "  Target Host/IP:   ${QNX_HOST_IP:-${QNX_HOST:-Not configured (e.g. 192.168.1.100)}}"
     echo "  SSH/SCP Port:     ${QNX_SSH_PORT:-22}"
+    echo "  Log Capture:      $log_enabled (slog2info)"
     echo "  Status:           Placeholder - QNX deployment & diagnostics will be supplemented here"
     echo "  Note:             Android ADB properties are skipped on QNX platform."
 }
@@ -1126,7 +1137,8 @@ deploy_android() {
     fi
 
     # Clear old logcat buffer before restart so captured logs are 100% fresh
-    if [ "$ENABLE_LOGCAT" = "true" ]; then
+    local logcat_enabled="${ENABLE_ANDROID_LOGCAT:-${ENABLE_LOGCAT:-false}}"
+    if [ "$logcat_enabled" = "true" ]; then
         log_info "Clearing previous device logcat buffer (adb logcat -c)..."
         adb logcat -c 2>/dev/null || true
     fi
@@ -1177,17 +1189,22 @@ deploy_qnx() {
 
 # --- 9. Deploy APK Dispatcher ---
 deploy_apk() {
-    if [ "$ENABLE_DEPLOY" != "true" ]; then
-        log_info "ENABLE_DEPLOY is not 'true', skipping device deployment."
-        return 0
-    fi
-
     local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
     case "$target_platform" in
         android)
+            local deploy_enabled="${CLI_START_DEPLOY:-${ENABLE_ANDROID_DEPLOY:-${ENABLE_DEPLOY:-true}}}"
+            if [ "$deploy_enabled" != "true" ]; then
+                log_info "Android deployment is disabled (ENABLE_ANDROID_DEPLOY='$deploy_enabled'), skipping."
+                return 0
+            fi
             deploy_android
             ;;
         qnx)
+            local deploy_enabled="${CLI_START_DEPLOY:-${ENABLE_QNX_DEPLOY:-${ENABLE_DEPLOY:-false}}}"
+            if [ "$deploy_enabled" != "true" ]; then
+                log_info "QNX deployment is disabled (ENABLE_QNX_DEPLOY='$deploy_enabled'), skipping."
+                return 0
+            fi
             deploy_qnx
             ;;
         *)
@@ -1197,17 +1214,8 @@ deploy_apk() {
     esac
 }
 
-# --- 10. Logcat Capture ---
-capture_logs() {
-    if [ "$ENABLE_DEPLOY" != "true" ] || [ "$ENABLE_LOGCAT" != "true" ]; then
-        return 0
-    fi
-
-    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
-    if [ "$target_platform" = "qnx" ]; then
-        return 0
-    fi
-
+# --- 10a. Android Logcat Capture ---
+capture_logs_android() {
     local log_file="$SCRIPT_DIR/deployment_log.txt"
 
     # Give the app/service time to start and emit logs after boot/restart.
@@ -1230,6 +1238,55 @@ capture_logs() {
         log_warn "Try a larger LOGCAT_SETTLE_SECONDS in $CONFIG_FILE_NAME."
     fi
     log_success "Deployment log saved to $log_file ($line_count lines)"
+}
+
+# --- 10b. QNX Log Capture (slog2 / slog2info) ---
+capture_logs_qnx() {
+    echo ""
+    log_info "============================================"
+    log_info " QNX Log Capture: slog2 / slog2info"
+    log_info "============================================"
+
+    local qnx_log_file="$SCRIPT_DIR/qnx_deployment_log.txt"
+    local qnx_host="${QNX_HOST_IP:-${QNX_HOST:-192.168.1.100}}"
+    local qnx_port="${QNX_SSH_PORT:-22}"
+
+    log_warn "Target platform is set to 'qnx'."
+    log_info "QNX slog2 / slog2info capture workflow template:"
+    log_info "  - Tool:         slog2info (QNX System Logger v2)"
+    log_info "  - Target Host:  $qnx_host (SSH port: $qnx_port)"
+    log_info "  - Output file:  $qnx_log_file"
+    log_info "  - Command:      ssh -p $qnx_port root@$qnx_host 'slog2info -t' > $qnx_log_file"
+    log_warn "slog2 log capture is currently paused (placeholder for future implementation)."
+    # Future execution snippet:
+    # ssh -p "$qnx_port" -o ConnectTimeout=5 "root@$qnx_host" "slog2info -t" > "$qnx_log_file" 2>/dev/null || true
+    return 0
+}
+
+# --- 10. Log Capture Dispatcher ---
+capture_logs() {
+    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
+    case "$target_platform" in
+        android)
+            local deploy_enabled="${CLI_START_DEPLOY:-${ENABLE_ANDROID_DEPLOY:-${ENABLE_DEPLOY:-true}}}"
+            local log_enabled="${ENABLE_ANDROID_LOGCAT:-${ENABLE_LOGCAT:-false}}"
+            if [ "$deploy_enabled" != "true" ] || [ "$log_enabled" != "true" ]; then
+                return 0
+            fi
+            capture_logs_android
+            ;;
+        qnx)
+            local deploy_enabled="${CLI_START_DEPLOY:-${ENABLE_QNX_DEPLOY:-${ENABLE_DEPLOY:-false}}}"
+            local log_enabled="${ENABLE_QNX_LOG:-${ENABLE_LOGCAT:-false}}"
+            if [ "$deploy_enabled" != "true" ] || [ "$log_enabled" != "true" ]; then
+                return 0
+            fi
+            capture_logs_qnx
+            ;;
+        *)
+            log_warn "Unknown platform '$target_platform', skipping log capture."
+            ;;
+    esac
 }
 
 # --- Main Entry Point ---
