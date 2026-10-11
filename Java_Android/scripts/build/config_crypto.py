@@ -1,4 +1,11 @@
 #!/usr/bin/env python3
+# ==============================================================================
+# Copyright (C) 2026 letrthong@gmail.com
+# Created & Maintained by: letrthong@gmail.com
+# Generated & Refactored by: Gemini 3.8 Pro (Google DeepMind)
+# Licensed under the Apache License, Version 2.0
+# ==============================================================================
+
 """Encrypt / decrypt apk.config with a password; the encrypted file is base64 text.
 
 Usage:
