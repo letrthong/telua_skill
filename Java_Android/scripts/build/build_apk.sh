@@ -9,6 +9,8 @@
 set -e
 
 # --- Constants & Global Defaults ---
+SCRIPT_VERSION="2.4.0"
+SCRIPT_LAST_UPDATED="2026-10-11"
 CONFIG_FILE_NAME="apk.config"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_FILE="$SCRIPT_DIR/$CONFIG_FILE_NAME"
@@ -19,12 +21,24 @@ log_success() { echo -e "\033[1;32m[SUCCESS]\033[0m $*"; }
 log_warn()    { echo -e "\033[1;33m[WARN]\033[0m $*"; }
 log_error()   { echo -e "\033[1;31m[ERROR]\033[0m $*"; }
 
+show_version() {
+    echo "build_apk.sh v$SCRIPT_VERSION (Last updated: $SCRIPT_LAST_UPDATED)"
+    echo "AOSP & QNX Automotive Build, Deployment and Automation Tool"
+    echo "Maintained by: letrthong@gmail.com"
+    exit 0
+}
+
 print_help() {
     cat <<EOF
+build_apk.sh - AOSP & QNX Automotive Build, Deployment and Automation Tool
+Version:      v$SCRIPT_VERSION (Updated: $SCRIPT_LAST_UPDATED)
+Maintained by: letrthong@gmail.com
+
 Usage: $0 [OPTIONS]
 
 Options:
-  --info                      Display target, build config, and ADB device info
+  -v, --version               Display script version and last update date, then exit
+  --info                      Display general build config and platform target info
   --platform android|qnx      Target platform: 'android' (default) or 'qnx' (reserved)
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
@@ -52,6 +66,9 @@ EOF
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            -v|--version)
+                show_version
+                ;;
             --info)
                 SHOW_INFO="true"
                 shift
@@ -237,6 +254,7 @@ show_info_general() {
     local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
 
     echo -e "\n\033[1;36m=== 1. GENERAL BUILD CONFIGURATION ===\033[0m"
+    echo "  Script Version:   v$SCRIPT_VERSION (Updated: $SCRIPT_LAST_UPDATED)"
     echo "  Project:          ${ACTIVE_PROJECT:-default}"
     echo "  Target Platform:  $target_platform"
     echo "  Target Lunch:     ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"

@@ -127,6 +127,7 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | Option | Description |
 |---|---|
 | *(none)* | Full cycle: Build + Deploy (if `ENABLE_DEPLOY="true"`) + Full Device Reboot |
+| `-v`, `--version` | Displays script version, release update date, and exits |
 | `--info` | Displays general build configuration followed by platform-specific target info (Android / QNX), then exits |
 | `--platform android\|qnx` | Target deployment platform: `android` (default, active) or `qnx` (reserved, currently skips deployment) |
 | `--start-deploy true\|false` | Overrides `ENABLE_DEPLOY` defined in `apk.config` |
@@ -148,6 +149,7 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 
 #### Usage Examples:
 ```bash
+./build_apk.sh -v                     # View script version and release date
 ./build_apk.sh --info                 # Inspect environment and device state
 ./build_apk.sh --git-help             # View Git cheatsheet of frequently used commands
 ./build_apk.sh --docker-help          # View Docker daemon & container cheatsheet
