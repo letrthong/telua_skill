@@ -141,24 +141,23 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | `--repo-reset` | Executes `repo forall -c "git reset --hard && git clean -xdf"` before `repo sync` (discards local edits) |
 | `--git-diff` | Displays `git diff HEAD^ HEAD` in the script's git repository and exits |
 | `--git-amend` | Runs `git commit --amend --no-edit` (staged changes only) and exits |
-| `--git-help` | Displays cheatsheet of commonly used Git commands and exits |
-| `--docker-help` | Displays cheatsheet of commonly used Docker commands and exits |
-| `--network-help` | Displays cheatsheet of commonly used Network & Port commands and exits |
+| `--git-help`, `git` | Displays cheatsheet of commonly used Git commands and exits |
+| `--docker-help`, `docker` | Displays cheatsheet of commonly used Docker commands and exits |
+| `--network-help`, `network` | Displays cheatsheet of commonly used Network & Port commands and exits |
 | `--find-file <pattern> [path]` | Searches for files by pattern in `[path]` (defaults to `.` if omitted) |
 | `--find-dir <pattern> [path]` | Searches for directories by pattern in `[path]` (defaults to `.` if omitted) |
 | `--find-text <text> [path]` | Greps for text string in files under `[path]` (defaults to `.` if omitted) |
 | `--test-mode true\|false` | Runs unit test suite instead of compiling the APK |
-| `-h`, `--help` | Displays help message and exits |
+| `-h`, `--help`, `help` | Displays help message and exits |
 
 #### Usage Examples:
 ```bash
 ./build_apk.sh --install              # Install/update 'telua' alias in ~/.bashrc
-telua --info                          # Run from any project workspace (uses local apk.config)
-./build_apk.sh -v                     # View script version and release date
-./build_apk.sh --info                 # Inspect environment and device state
-./build_apk.sh --git-help             # View Git cheatsheet of frequently used commands
-./build_apk.sh --docker-help          # View Docker daemon & container cheatsheet
-./build_apk.sh --network-help         # View Network, TCP open ports & ifconfig cheatsheet
+telua init                            # Initialize apk.config in current workspace
+telua info                            # Inspect environment and device state
+telua git                             # View Git cheatsheet (or: telua --git-help)
+telua docker                          # View Docker daemon & container cheatsheet
+telua network                         # View Network & Port cheatsheet
 ./build_apk.sh --find-file "*.bp" packages/apps/Car # Find Android.bp files in specific path
 ./build_apk.sh --find-dir "Oem*" .    # Find directories matching pattern
 ./build_apk.sh --find-text "DEBUG_TAG" src/ # Grep text string inside files

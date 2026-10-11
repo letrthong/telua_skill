@@ -82,9 +82,9 @@ Options:
   --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' and exit (no sync, no build)
   --git-diff                  Run 'git diff HEAD^ HEAD' in this script's git repo and exit
   --git-amend                 Run 'git commit --amend --no-edit' (staged changes only) in this script's git repo and exit
-  --git-help                  Display cheatsheet of commonly used Git commands and exit
-  --docker-help               Display cheatsheet of commonly used Docker commands and exit
-  --network-help              Display cheatsheet of commonly used Network & Port commands and exit
+  --git-help, git             Display cheatsheet of commonly used Git commands and exit
+  --docker-help, docker       Display cheatsheet of commonly used Docker commands and exit
+  --network-help, network     Display cheatsheet of commonly used Network & Port commands and exit
   --find-file <pattern> [path] Search for files by pattern in [path] (default: '.')
   --find-dir <pattern> [path]  Search for directories by pattern in [path] (default: '.')
   --find-text <text> [path]    Search for text in files under [path] (default: '.')
@@ -121,18 +121,18 @@ parse_arguments() {
                 # Handled early in parse_early_arguments
                 shift 2
                 ;;
-            --init|--init-config)
+            --init|--init-config|init)
                 init_project_config
                 exit 0
                 ;;
-            --install)
+            --install|install)
                 install_bashrc_alias
                 exit 0
                 ;;
-            -v|--version)
+            -v|--version|version)
                 show_version
                 ;;
-            --info)
+            --info|info)
                 SHOW_INFO="true"
                 shift
                 ;;
@@ -188,15 +188,15 @@ parse_arguments() {
                 GIT_AMEND="true"
                 shift
                 ;;
-            --git-help)
+            --git-help|git-help|git|--git)
                 SHOW_GIT_HELP="true"
                 shift
                 ;;
-            --docker-help)
+            --docker-help|docker-help|docker|--docker)
                 SHOW_DOCKER_HELP="true"
                 shift
                 ;;
-            --network-help)
+            --network-help|network-help|network|--network)
                 SHOW_NETWORK_HELP="true"
                 shift
                 ;;
