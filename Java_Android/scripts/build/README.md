@@ -211,6 +211,7 @@ The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build an
 
 | Variable | Description |
 |---|---|
+| `AOSP_TOP_REL_PATH` | Relative path to AOSP build root from `ROOT_DIR`. Examples: `"android/qssi"` (Qualcomm QSSI) or `"android"` (MediaTek / NXP / pure AOSP / QNX Android container). Defaults to auto-detecting `android/qssi` if present, otherwise `android`. |
 | `CONFIG_TARGET_PRODUCT` | Target product for `lunch` (e.g., `abc_xyz_in`) |
 | `CONFIG_TARGET_BUILD_VARIANT` | Target build variant (`userdebug` or `eng`) |
 | `BUILD_JOBS` | Parallel compilation threads (`-j`). Leave empty `""` to auto-detect via `nproc` (fallback: 8) |

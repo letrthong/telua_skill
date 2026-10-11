@@ -238,6 +238,7 @@ show_info() {
     echo "  Logcat Filter:    ${LOGCAT_FILTER:-None (full)}"
     echo "  Debug Tags:       ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
     echo "  Root Dir:         ${ROOT_DIR:-Not found}"
+    echo "  AOSP Top Rel:     ${AOSP_TOP_REL_PATH:-Auto-detect (android/qssi or android)}"
     echo "  AOSP Top:         ${ANDROID_TOP:-Not found (no 'android' dir above $SCRIPT_DIR)}"
     echo "  Repo Sync Jobs:   ${REPO_SYNC_JOBS:-4}"
     echo "  Repo Post Root:   ${REPO_POST_SYNC_ROOT_COMMAND:-${POST_SYNC_ROOT_COMMAND:-None}}"
@@ -348,7 +349,14 @@ resolve_android_paths() {
     fi
 
     ROOT_DIR="$(dirname "$android_dir")"
-    ANDROID_TOP="$ROOT_DIR/android/qssi"
+
+    if [ -n "$AOSP_TOP_REL_PATH" ]; then
+        ANDROID_TOP="$ROOT_DIR/$AOSP_TOP_REL_PATH"
+    elif [ -d "$ROOT_DIR/android/qssi" ]; then
+        ANDROID_TOP="$ROOT_DIR/android/qssi"
+    else
+        ANDROID_TOP="$android_dir"
+    fi
 
     SOURCE_DIR="$ANDROID_TOP/$SOURCE_CODE_RELATIVE_PATH"
     DIR_OUT="$ANDROID_TOP/$APK_OUTPUT_RELATIVE_PATH"
@@ -775,7 +783,7 @@ run_repo_sync() {
     # 1. Run Hook 1 in ROOT_DIR (BEFORE cd to android/qssi)
     post_sync_root_cli
 
-    # 2. Navigate to ANDROID_TOP ($ROOT_DIR/android/qssi)
+    # 2. Navigate to ANDROID_TOP
     log_info "Navigating to: $ANDROID_TOP"
     if [ ! -d "$ANDROID_TOP" ]; then
         log_error "Target directory '$ANDROID_TOP' does not exist after repo sync!"
