@@ -144,10 +144,11 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | `--git-help`, `git` | Displays cheatsheet of commonly used Git commands and exits |
 | `--docker-help`, `docker` | Displays cheatsheet of commonly used Docker commands and exits |
 | `--network-help`, `network` | Displays cheatsheet of commonly used Network & Port commands and exits |
+| `--audio, audio [action]` | Controls audio via ADB shell (`vol-up`, `vol-down`, `vol-mute`, `d`/`dump`) using commands from `apk.config` |
 | `--find-file <pattern> [path]` | Searches for files by pattern in `[path]` (defaults to `.` if omitted) |
 | `--find-dir <pattern> [path]` | Searches for directories by pattern in `[path]` (defaults to `.` if omitted) |
 | `--find-text <text> [path]` | Greps for text string in files under `[path]` (defaults to `.` if omitted) |
-| `--test-mode true\|false` | Runs unit test suite instead of compiling the APK |
+| `--test-mode true|false` | Runs unit test suite instead of compiling the APK |
 | `-h`, `--help`, `help` | Displays help message and exits |
 
 #### Usage Examples:
@@ -155,6 +156,10 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 ./build_apk.sh --install              # Install/update 'telua' alias in ~/.bashrc
 telua init                            # Initialize apk.config in current workspace
 telua info                            # Inspect environment and device state
+telua audio vol-up                    # Increase volume on target device (or: telua --audio vol-up)
+telua audio vol-down                  # Decrease volume on target device
+telua audio vol-mute                  # Mute volume on target device
+telua audio d                         # Dump audio service status (dumpsys audio / CarAudioService)
 telua git                             # View Git cheatsheet (or: telua --git-help)
 telua docker                          # View Docker daemon & container cheatsheet
 telua network                         # View Network & Port cheatsheet
@@ -259,6 +264,22 @@ Debug tags are activated via persistent system properties:
 adb shell setprop persist.log.tag.<TAG> DEBUG
 ```
 This ensures `Log.isLoggable(TAG, Log.DEBUG)` returns `true` in Java code and persists across reboots.
+
+---
+
+### 5.3b Audio & Custom ADB Shell Commands
+
+Configure commands executed when running `telua audio <action>` or `telua --audio <action>`:
+
+| Variable | Default | Description |
+|---|---|---|
+| `ADB_SHELL_AUDIO_UP` | `"cmd media_session volume --show --adj raise"` | Command executed for `vol-up` / `up` (alternative: `"input keyevent 24"`) |
+| `ADB_SHELL_AUDIO_DOWN` | `"cmd media_session volume --show --adj lower"` | Command executed for `vol-down` / `down` (alternative: `"input keyevent 25"`) |
+| `ADB_SHELL_AUDIO_MUTE` | `"cmd media_session volume --show --adj mute"` | Command executed for `vol-mute` / `mute` (alternative: `"input keyevent 164"` or `cmd car_service set-audio-muted 0 0 true`) |
+| `ADB_SHELL_AUDIO_D` | `"dumpsys audio"` | Command executed for `d` / `dump` (alternative: `"dumpsys car_service --services CarAudioService"`) |
+
+> **Android Automotive (AAOS) & CarShellCommand:**
+> In AAOS environments, you can customize these commands to invoke `CarShellCommand` (`cmd car_service ...`) or dump `CarAudioService`.
 
 ---
 

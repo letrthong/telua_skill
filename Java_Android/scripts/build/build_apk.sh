@@ -620,6 +620,11 @@ show_info_android() {
     echo "  Logcat Enabled:   $logcat_enabled"
     echo "  Logcat Filter:    ${LOGCAT_FILTER:-None (full)}"
     echo "  Debug Tags:       ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
+    echo "  Audio Controls (ADB Shell):"
+    echo "    Vol Up:         ${ADB_SHELL_AUDIO_UP:-${ADB_SHELL_AUDIO_VOL_UP:-${ADB_SHELL_VOL_UP:-cmd media_session volume --show --adj raise}}}"
+    echo "    Vol Down:       ${ADB_SHELL_AUDIO_DOWN:-${ADB_SHELL_AUDIO_DONW:-${ADB_SHELL_AUDIO_VOL_DOWN:-${ADB_SHELL_VOL_DOWN:-cmd media_session volume --show --adj lower}}}}"
+    echo "    Vol Mute:       ${ADB_SHELL_AUDIO_MUTE:-${ADB_SHELL_AUDIO_VOL_MUTE:-${ADB_SHELL_VOL_MUTE:-cmd media_session volume --show --adj mute}}}"
+    echo "    Audio Dump (d): ${ADB_SHELL_AUDIO_D:-${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
     if command -v adb >/dev/null 2>&1; then
         local dev_state build_type internal_id vendor_build_type
         dev_state=$(adb get-state 2>/dev/null || echo "offline")
