@@ -9,11 +9,28 @@
 set -e
 
 # --- Constants & Global Defaults ---
-SCRIPT_VERSION="2.4.0"
+SCRIPT_VERSION="2.5.0"
 SCRIPT_LAST_UPDATED="2026-10-11"
 CONFIG_FILE_NAME="apk.config"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_FILE="$SCRIPT_DIR/$CONFIG_FILE_NAME"
+
+# Tìm apk.config: ưu tiên tại $PWD hoặc duyệt ngược lên các thư mục cha của dự án
+find_config_file() {
+    local check_dir="$PWD"
+    while [ "$check_dir" != "/" ] && [ "$check_dir" != "." ]; do
+        if [ -f "$check_dir/$CONFIG_FILE_NAME" ]; then
+            echo "$check_dir/$CONFIG_FILE_NAME"
+            return 0
+        fi
+        if [ -d "$check_dir/.repo" ]; then
+            break
+        fi
+        check_dir="$(dirname "$check_dir")"
+    done
+    echo "$SCRIPT_DIR/$CONFIG_FILE_NAME"
+}
+
+CONFIG_FILE="$(find_config_file)"
 
 # Logging helpers with colors
 log_info()    { echo -e "\033[1;34m[INFO]\033[0m $*"; }
@@ -37,6 +54,9 @@ Maintained by: letrthong@gmail.com
 Usage: $0 [OPTIONS]
 
 Options:
+  --config <path>             Explicitly specify path to apk.config file
+  --init                      Copy template apk.config into current directory ($PWD)
+  --install                   Install/update 'telua' alias in ~/.bashrc and source it
   -v, --version               Display script version and last update date, then exit
   --info                      Display general build config and platform target info
   --platform android|qnx      Target platform: 'android' (default) or 'qnx' (reserved)
@@ -62,10 +82,37 @@ Configuration:
 EOF
 }
 
+parse_early_arguments() {
+    local prev=""
+    for arg in "$@"; do
+        if [ "$prev" = "--config" ]; then
+            if [ -f "$arg" ]; then
+                CONFIG_FILE="$(readlink -f "$arg" 2>/dev/null || echo "$arg")"
+            else
+                log_error "Config file specified via --config not found: $arg"
+                exit 1
+            fi
+        fi
+        prev="$arg"
+    done
+}
+
 # --- 1. Parse Command Line Arguments ---
 parse_arguments() {
     while [[ $# -gt 0 ]]; do
         case "$1" in
+            --config)
+                # Handled early in parse_early_arguments
+                shift 2
+                ;;
+            --init|--init-config)
+                init_project_config
+                exit 0
+                ;;
+            --install)
+                install_bashrc_alias
+                exit 0
+                ;;
             -v|--version)
                 show_version
                 ;;
@@ -197,7 +244,84 @@ parse_arguments() {
     done
 }
 
-# --- 1a. Install into a project directory (--softlink <path>) ---
+# --- 1a. Install Alias into ~/.bashrc (--install) ---
+install_bashrc_alias() {
+    local real_script
+    if command -v realpath >/dev/null 2>&1; then
+        real_script="$(realpath "${BASH_SOURCE[0]}")"
+    elif command -v readlink >/dev/null 2>&1; then
+        real_script="$(readlink -f "${BASH_SOURCE[0]}")"
+    else
+        real_script="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+    fi
+
+    local bashrc_file="${HOME}/.bashrc"
+    if [ ! -f "$bashrc_file" ]; then
+        log_info "$bashrc_file not found, creating new file..."
+        touch "$bashrc_file"
+    fi
+
+    local alias_entry="alias telua='$real_script'"
+
+    if grep -E -q '^[[:space:]]*alias[[:space:]]+telua=' "$bashrc_file"; then
+        # Update existing alias in ~/.bashrc
+        if sed --version 2>/dev/null | grep -q GNU; then
+            sed -i "s#^[[:space:]]*alias[[:space:]]\+telua=.*#$alias_entry#g" "$bashrc_file"
+        else
+            sed -i '' "s#^[[:space:]]*alias[[:space:]]\{1,\}telua=.*#$alias_entry#g" "$bashrc_file" 2>/dev/null || sed -i "s#^[[:space:]]*alias[[:space:]]\+telua=.*#$alias_entry#g" "$bashrc_file"
+        fi
+        log_success "Updated existing alias in $bashrc_file:"
+        echo -e "  \033[1;36m$alias_entry\033[0m"
+    else
+        # Append alias to ~/.bashrc
+        echo "" >> "$bashrc_file"
+        echo "# Telua build automation alias" >> "$bashrc_file"
+        echo "$alias_entry" >> "$bashrc_file"
+        log_success "Added alias to $bashrc_file:"
+        echo -e "  \033[1;36m$alias_entry\033[0m"
+    fi
+
+    # Source ~/.bashrc for the current shell environment
+    if [ -f "$bashrc_file" ]; then
+        # shellcheck disable=SC1090
+        source "$bashrc_file" 2>/dev/null || true
+    fi
+
+    log_info "Configuration reloaded. To use the 'telua' alias in your current terminal session immediately, run:"
+    log_info "  source ~/.bashrc"
+}
+
+# --- 1b. Initialize Project Config (--init) ---
+init_project_config() {
+    local target_config="$PWD/$CONFIG_FILE_NAME"
+    local template_config="$SCRIPT_DIR/$CONFIG_FILE_NAME"
+
+    if [ ! -f "$template_config" ]; then
+        log_error "Template configuration file '$template_config' not found!"
+        exit 1
+    fi
+
+    if [ "$PWD" = "$SCRIPT_DIR" ]; then
+        log_warn "Already in master script directory ($PWD). Template config is here."
+        exit 0
+    fi
+
+    if [ -f "$target_config" ]; then
+        log_warn "'$CONFIG_FILE_NAME' already exists in current directory ($PWD)."
+        read -r -p "Do you want to overwrite it with template config? (y/N): " confirm
+        if [[ "$confirm" != "y" && "$confirm" != "Y" ]]; then
+            log_info "Aborted. Existing $CONFIG_FILE_NAME preserved."
+            exit 0
+        fi
+    fi
+
+    cp "$template_config" "$target_config"
+    log_success "Initialized: $target_config"
+    log_info "Next: edit $CONFIG_FILE_NAME, then run: telua --info"
+    exit 0
+}
+
+# --- 1c. Install into a project directory (--softlink <path>) ---
 # Symlinks this script (fixes to the original reach every project) and copies
 # apk.config (each project keeps its own settings). Existing files are overwritten.
 # NOTE: the script finds apk.config and the 'android' root relative to the
@@ -241,10 +365,10 @@ install_to_project() {
     ln -sfn "$real_script" "$real_target/build_apk.sh"
     # rm first: if the old config is a symlink, 'cp' would write through it.
     rm -f "$real_target/$CONFIG_FILE_NAME"
-    cp "$CONFIG_FILE" "$real_target/$CONFIG_FILE_NAME"
+    cp "$SCRIPT_DIR/$CONFIG_FILE_NAME" "$real_target/$CONFIG_FILE_NAME"
 
     log_success "Linked:  $real_target/build_apk.sh -> $real_script"
-    log_success "Copied:  $CONFIG_FILE -> $real_target/$CONFIG_FILE_NAME"
+    log_success "Copied:  $SCRIPT_DIR/$CONFIG_FILE_NAME -> $real_target/$CONFIG_FILE_NAME"
     log_info "Next: edit $real_target/$CONFIG_FILE_NAME, then run: cd \"$real_target\" && ./build_apk.sh --info"
 }
 
@@ -256,6 +380,7 @@ show_info_general() {
 
     echo -e "\n\033[1;36m=== 1. GENERAL BUILD CONFIGURATION ===\033[0m"
     echo "  Script Version:   v$SCRIPT_VERSION (Updated: $SCRIPT_LAST_UPDATED)"
+    echo "  Config File:      $CONFIG_FILE"
     echo "  Project:          ${ACTIVE_PROJECT:-default}"
     echo "  Target Platform:  $target_platform"
     echo "  Target Lunch:     ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
@@ -346,7 +471,7 @@ show_info() {
 # --- 2. Load & Validate Configuration ---
 load_and_validate_config() {
     if [ ! -f "$CONFIG_FILE" ]; then
-        log_error "Configuration file '$CONFIG_FILE_NAME' not found in $SCRIPT_DIR!"
+        log_error "Configuration file '$CONFIG_FILE_NAME' not found in $PWD or $SCRIPT_DIR!"
         log_error "Please create $CONFIG_FILE_NAME with required variables."
         exit 1
     fi
@@ -390,7 +515,9 @@ run_tests() {
         exit 1
     fi
 
-    local test_dir="$SCRIPT_DIR/$TEST_RELATIVE_PATH"
+    local config_dir
+    config_dir="$(dirname "$CONFIG_FILE")"
+    local test_dir="$config_dir/$TEST_RELATIVE_PATH"
     if [ ! -d "$test_dir" ]; then
         log_error "Test directory '$test_dir' does not exist"
         exit 1
@@ -408,7 +535,13 @@ run_tests() {
 
 # --- 4. Resolve Android AOSP Top Directory ---
 resolve_android_paths() {
-    local current_dir="$SCRIPT_DIR"
+    # Resolve starting directory: prioritize directory of CONFIG_FILE ($PWD if found), fallback to SCRIPT_DIR
+    local current_dir
+    if [ -f "$CONFIG_FILE" ]; then
+        current_dir="$(cd "$(dirname "$CONFIG_FILE")" && pwd)"
+    else
+        current_dir="$SCRIPT_DIR"
+    fi
     local android_dir=""
 
     while [ "$current_dir" != "/" ] && [ "$current_dir" != "." ]; do
@@ -1331,6 +1464,7 @@ capture_logs() {
 
 # --- Main Entry Point ---
 main() {
+    parse_early_arguments "$@"
     load_and_validate_config
     parse_arguments "$@"
 
