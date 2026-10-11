@@ -78,9 +78,9 @@ Options:
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
   --softlink [path]           Symlink this script + copy $CONFIG_FILE_NAME into [path] (overwrites)
                               (defaults to SOFTLINK_TARGET_PATH from $CONFIG_FILE_NAME if omitted)
-  --audio, audio [action]     Control audio via ADB shell: vol-up | vol-down | vol-mute | d (dump)
+  --audio, audio [action]     Control audio via ADB shell: vol-up | vol-down | vol-mute | dump (or d)
                               Commands are read dynamically from $CONFIG_FILE_NAME:
-                              ADB_SHELL_AUDIO_UP, DOWN, MUTE, D
+                              ADB_SHELL_AUDIO_UP, DOWN, MUTE, DUMP
   --repo-sync                 Run 'repo sync' in ROOT_DIR, cd to android/qssi & run post_sync_cli before build
   --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' and exit (no sync, no build)
   --git-diff                  Run 'git diff HEAD^ HEAD' in this script's git repo and exit
@@ -273,6 +273,10 @@ parse_arguments() {
                 handle_audio_command "vol-mute"
                 exit 0
                 ;;
+            dump|--dump)
+                handle_audio_command "dump"
+                exit 0
+                ;;
             -h|--help|help)
                 print_help
                 exit 0
@@ -291,51 +295,47 @@ show_audio_help() {
     local up_cmd="${ADB_SHELL_AUDIO_UP:-${ADB_SHELL_AUDIO_VOL_UP:-${ADB_SHELL_VOL_UP:-cmd media_session volume --show --adj raise}}}"
     local down_cmd="${ADB_SHELL_AUDIO_DOWN:-${ADB_SHELL_AUDIO_DONW:-${ADB_SHELL_AUDIO_VOL_DOWN:-${ADB_SHELL_VOL_DOWN:-cmd media_session volume --show --adj lower}}}}"
     local mute_cmd="${ADB_SHELL_AUDIO_MUTE:-${ADB_SHELL_AUDIO_VOL_MUTE:-${ADB_SHELL_VOL_MUTE:-cmd media_session volume --show --adj mute}}}"
-    local d_cmd="${ADB_SHELL_AUDIO_D:-${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
+    local dump_cmd="${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_AUDIO_D:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
 
     cat <<EOF
 
-telua audio - Android / Car Audio Shell Control Utility
-Config loaded from: $CONFIG_FILE
+================================================================================
+  telua audio - Android / Car Audio Shell Control Utility
+  Config File: $CONFIG_FILE
+================================================================================
 
-Usage:
-  telua audio <action>
-  telua --audio <action>
+4 Audio CLI Commands:
+  1. telua audio vol-up     Increase audio volume
+                            ADB Shell: $up_cmd
+                            (Config: ADB_SHELL_AUDIO_UP)
 
-Supported Actions:
-  vol-up, up             Increase audio volume
-                         ADB Shell: $up_cmd
-                         (Config variable: ADB_SHELL_AUDIO_UP)
+  2. telua audio vol-down   Decrease audio volume
+                            ADB Shell: $down_cmd
+                            (Config: ADB_SHELL_AUDIO_DOWN)
 
-  vol-down, down         Decrease audio volume
-                         ADB Shell: $down_cmd
-                         (Config variable: ADB_SHELL_AUDIO_DOWN)
+  3. telua audio vol-mute   Toggle or mute audio volume
+                            ADB Shell: $mute_cmd
+                            (Config: ADB_SHELL_AUDIO_MUTE)
 
-  vol-mute, mute         Toggle or set volume mute
-                         ADB Shell: $mute_cmd
-                         (Config variable: ADB_SHELL_AUDIO_MUTE)
+  4. telua audio dump       Dump audio service state (alias: telua audio d)
+                            ADB Shell: $dump_cmd
+                            (Config: ADB_SHELL_AUDIO_DUMP / ADB_SHELL_AUDIO_D)
 
-  d, dump                Dump audio service state
-                         ADB Shell: $d_cmd
-                         (Config variable: ADB_SHELL_AUDIO_D)
+Quick CLI Execution:
+  telua audio vol-up
+  telua audio vol-down
+  telua audio vol-mute
+  telua audio dump          (or: telua audio d)
 
-Examples:
-  telua audio vol-up           # Increase volume
-  telua audio vol-down         # Decrease volume
-  telua audio vol-mute         # Mute audio
-  telua audio d                # Dump audio status / CarAudioService
-  telua --audio vol-up         # Flag syntax also supported
-  telua vol-up                 # Direct shortcut
-
-Configuration:
-  Commands are read directly from '$CONFIG_FILE_NAME':
-    ADB_SHELL_AUDIO_UP="..."
-    ADB_SHELL_AUDIO_DOWN="..."
-    ADB_SHELL_AUDIO_MUTE="..."
-    ADB_SHELL_AUDIO_D="..."
+Configuration in $CONFIG_FILE_NAME:
+  ADB_SHELL_AUDIO_UP="..."
+  ADB_SHELL_AUDIO_DOWN="..."
+  ADB_SHELL_AUDIO_MUTE="..."
+  ADB_SHELL_AUDIO_DUMP="..."
 
   Compatible with standard Android (cmd media_session / input keyevent)
   and Android Automotive CarShellCommand (cmd car_service ...).
+================================================================================
 
 EOF
 }
@@ -624,7 +624,7 @@ show_info_android() {
     echo "    Vol Up:         ${ADB_SHELL_AUDIO_UP:-${ADB_SHELL_AUDIO_VOL_UP:-${ADB_SHELL_VOL_UP:-cmd media_session volume --show --adj raise}}}"
     echo "    Vol Down:       ${ADB_SHELL_AUDIO_DOWN:-${ADB_SHELL_AUDIO_DONW:-${ADB_SHELL_AUDIO_VOL_DOWN:-${ADB_SHELL_VOL_DOWN:-cmd media_session volume --show --adj lower}}}}"
     echo "    Vol Mute:       ${ADB_SHELL_AUDIO_MUTE:-${ADB_SHELL_AUDIO_VOL_MUTE:-${ADB_SHELL_VOL_MUTE:-cmd media_session volume --show --adj mute}}}"
-    echo "    Audio Dump (d): ${ADB_SHELL_AUDIO_D:-${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
+    echo "    Audio Dump:     ${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_AUDIO_D:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
     if command -v adb >/dev/null 2>&1; then
         local dev_state build_type internal_id vendor_build_type
         dev_state=$(adb get-state 2>/dev/null || echo "offline")
