@@ -877,9 +877,14 @@ run_repo_sync() {
 setup_build_environment_android() {
     cd "$ANDROID_TOP"
 
-    if [[ -n "$TARGET_PRODUCT" && -n "$TARGET_BUILD_VARIANT" ]]; then
+    local prod_var="${ENV_VAR_PRODUCT_NAME:-TARGET_PRODUCT}"
+    local var_var="${ENV_VAR_VARIANT_NAME:-TARGET_BUILD_VARIANT}"
+    local current_prod="${!prod_var}"
+    local current_variant="${!var_var}"
+
+    if [[ -n "$current_prod" && -n "$current_variant" ]]; then
         log_info "Build environment is already active:"
-        log_info "TARGET_PRODUCT = $TARGET_PRODUCT, TARGET_BUILD_VARIANT = $TARGET_BUILD_VARIANT"
+        log_info "$prod_var = $current_prod, $var_var = $current_variant"
         return 0
     fi
 
@@ -890,7 +895,7 @@ setup_build_environment_android() {
 
     log_info "Initializing Android environment: source build/envsetup.sh"
     # envsetup.sh/lunch return non-zero on harmless warnings (e.g. symlink creation),
-    # which 'set -e' would turn into an abort; success is verified via TARGET_PRODUCT below.
+    # which 'set -e' would turn into an abort; success is verified via target env vars below.
     set +e
     source build/envsetup.sh
 
@@ -899,12 +904,15 @@ setup_build_environment_android() {
     lunch "$target"
     set -e
 
-    if [[ -z "$TARGET_PRODUCT" || -z "$TARGET_BUILD_VARIANT" ]]; then
-        log_error "Failed to initialize target environment variables after lunch."
+    current_prod="${!prod_var}"
+    current_variant="${!var_var}"
+
+    if [[ -z "$current_prod" || -z "$current_variant" ]]; then
+        log_error "Failed to initialize target environment variables ($prod_var, $var_var) after lunch."
         exit 1
     fi
 
-    log_success "Android environment ready: $TARGET_PRODUCT-$TARGET_BUILD_VARIANT"
+    log_success "Android environment ready: $current_prod-$current_variant ($prod_var=$current_prod, $var_var=$current_variant)"
 }
 
 # --- 5b. Setup QNX Build Environment (SDP Toolchain) ---

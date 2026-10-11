@@ -218,9 +218,11 @@ The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build an
 | `AOSP_TOP_REL_PATH` | Relative path to AOSP build root from `ROOT_DIR`. Examples: `"android/qssi"` (Qualcomm QSSI) or `"android"` (MediaTek / NXP / pure AOSP / QNX Android container). Defaults to auto-detecting `android/qssi` if present, otherwise `android`. |
 | `CONFIG_TARGET_PRODUCT` | Target product for `lunch` (e.g., `abc_xyz_in`) |
 | `CONFIG_TARGET_BUILD_VARIANT` | Target build variant (`userdebug` or `eng`) |
+| `ENV_VAR_PRODUCT_NAME` | Name of environment variable exported by `lunch` for target product (default: `"TARGET_PRODUCT"`). Customizable for vendor BSPs |
+| `ENV_VAR_VARIANT_NAME` | Name of environment variable exported by `lunch` for target build variant (default: `"TARGET_BUILD_VARIANT"`). Customizable for vendor BSPs |
 | `BUILD_JOBS` | Parallel compilation threads (`-j`). Leave empty `""` to auto-detect via `nproc` (fallback: 8) |
 
-> **Active Shell Optimization:** If the current terminal session already has an active AOSP environment (`TARGET_PRODUCT` and `TARGET_BUILD_VARIANT` are set), the script **skips `envsetup.sh` and `lunch`** to save execution time.
+> **Active Shell Optimization:** If the current terminal session already has an active environment (variables defined by `ENV_VAR_PRODUCT_NAME` and `ENV_VAR_VARIANT_NAME` are set), the script **skips `envsetup.sh` and `lunch`** to save execution time.
 
 ### 5.2b Repo Sync & Two-Stage Post-Sync CLI Hooks
 
