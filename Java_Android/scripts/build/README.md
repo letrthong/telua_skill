@@ -138,6 +138,7 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | `--git-amend` | Runs `git commit --amend --no-edit` (staged changes only) and exits |
 | `--git-help` | Displays cheatsheet of commonly used Git commands and exits |
 | `--docker-help` | Displays cheatsheet of commonly used Docker commands and exits |
+| `--network-help` | Displays cheatsheet of commonly used Network & Port commands and exits |
 | `--find-file <pattern> [path]` | Searches for files by pattern in `[path]` (defaults to `.` if omitted) |
 | `--find-dir <pattern> [path]` | Searches for directories by pattern in `[path]` (defaults to `.` if omitted) |
 | `--find-text <text> [path]` | Greps for text string in files under `[path]` (defaults to `.` if omitted) |
@@ -149,6 +150,7 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 ./build_apk.sh --info                 # Inspect environment and device state
 ./build_apk.sh --git-help             # View Git cheatsheet of frequently used commands
 ./build_apk.sh --docker-help          # View Docker daemon & container cheatsheet
+./build_apk.sh --network-help         # View Network, TCP open ports & ifconfig cheatsheet
 ./build_apk.sh --find-file "*.bp" packages/apps/Car # Find Android.bp files in specific path
 ./build_apk.sh --find-dir "Oem*" .    # Find directories matching pattern
 ./build_apk.sh --find-text "DEBUG_TAG" src/ # Grep text string inside files
