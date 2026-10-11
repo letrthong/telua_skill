@@ -2,10 +2,14 @@
 """Encrypt / decrypt apk.config with a password; the encrypted file is base64 text.
 
 Usage:
-  ./config_crypto.py encrypt 12345      # apk.config      -> enc_apk.config (overwrites existing enc_apk.config)
-  ./config_crypto.py decrypt 12345      # enc_apk.config  -> dec_apk.config (apk.config is never modified)
-  ./config_crypto.py decrypt 12345 --force   # same, overwriting an existing dec_apk.config
-  ./config_crypto.py encrypt            # omit the password to be prompted (not echoed)
+  ./config_crypto.py encrypt ?              # prompt for password interactively ('?' or omit)
+  ./config_crypto.py encrypt                # same, interactive prompt (not echoed)
+  ./config_crypto.py encrypt 12345          # direct password argument (overwrites enc_apk.config)
+  ./config_crypto.py decrypt ?              # prompt for password interactively
+  ./config_crypto.py decrypt                # same, interactive prompt
+  ./config_crypto.py decrypt 12345          # decrypt using direct password
+  ./config_crypto.py decrypt 12345 --force  # same, overwriting existing dec_apk.config
+  echo "12345" | ./config_crypto.py encrypt - # read password from stdin
 
 Requires: python3 -m pip install cryptography
 File format: base64( salt(16 bytes) || Fernet token ); key = PBKDF2-HMAC-SHA256(password, salt).
@@ -57,18 +61,35 @@ def check_paths(src: str, dst: str, force: bool) -> None:
         sys.exit(f"ERROR: '{dst}' already exists (use --force to overwrite)")
 
 
+def get_password(arg_password: str | None, confirm: bool = False) -> str:
+    """Resolve password from direct argument, '?' interactive prompt, or '-' stdin."""
+    if arg_password == "-":
+        pw = sys.stdin.readline().rstrip("\r\n")
+        if not pw:
+            sys.exit("ERROR: empty password received from stdin")
+        return pw
+
+    if arg_password is None or arg_password in ("?", "prompt"):
+        pw = getpass.getpass("Password: ")
+        if confirm:
+            confirm_pw = getpass.getpass("Confirm password: ")
+            if pw != confirm_pw:
+                sys.exit("ERROR: passwords do not match")
+        if not pw:
+            sys.exit("ERROR: password must not be empty")
+        return pw
+
+    if not arg_password:
+        sys.exit("ERROR: password must not be empty")
+    return arg_password
+
+
 def encrypt(args: argparse.Namespace) -> None:
     src = args.input or PLAIN_FILE
     dst = args.output or ENCRYPTED_FILE
     check_paths(src, dst, force=True)  # encrypt always overwrites enc_apk.config
 
-    password = args.password
-    if password is None:
-        password = getpass.getpass("Password: ")
-        if password != getpass.getpass("Confirm password: "):
-            sys.exit("ERROR: passwords do not match")
-    if not password:
-        sys.exit("ERROR: password must not be empty")
+    password = get_password(args.password, confirm=True)
 
     with open(src, "rb") as f:
         plaintext = f.read()
@@ -93,9 +114,7 @@ def decrypt(args: argparse.Namespace) -> None:
         sys.exit("ERROR: input is too short to be an encrypted config")
     salt, token = payload[:SALT_SIZE], payload[SALT_SIZE:]
 
-    password = args.password
-    if password is None:
-        password = getpass.getpass("Password: ")
+    password = get_password(args.password, confirm=False)
 
     try:
         plaintext = Fernet(derive_key(password, salt)).decrypt(token)
@@ -112,7 +131,7 @@ def main() -> None:
 
     for name, func in (("encrypt", encrypt), ("decrypt", decrypt)):
         p = sub.add_parser(name)
-        p.add_argument("password", nargs="?", help="omit to be prompted")
+        p.add_argument("password", nargs="?", help="password, '?' to prompt interactively, '-' for stdin, or omit")
         p.add_argument("-i", "--input", help="input file")
         p.add_argument("-o", "--output", help="output file")
         p.add_argument("--force", action="store_true", help="overwrite existing output")

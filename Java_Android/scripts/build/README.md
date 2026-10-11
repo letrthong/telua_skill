@@ -8,6 +8,7 @@ An automated developer workflow script for building and deploying privileged sys
 |---|---|
 | `build_apk.sh` | Core execution script (orchestration logic) |
 | `apk.config` | Project configuration (profile selection, lunch targets, deploy flags, debug tags) |
+| `config_crypto.py` | Encrypt / decrypt `apk.config` with a password (PBKDF2 + Fernet) |
 
 ---
 
@@ -19,11 +20,15 @@ An automated developer workflow script for building and deploying privileged sys
 - **Linux build host** with an initialized AOSP source tree adhering to `.../android/qssi/` (must contain `build/envsetup.sh`).
 - **ADB** (`platform-tools`) installed and accessible in `$PATH`.
 - **Target Device** running a **`userdebug`** or **`eng`** build image. Production `user` builds strictly disallow `adb root` and `adb remount` (script will safely abort).
+- **Python 3** with `cryptography` package (optional, required only for `config_crypto.py`):
+  ```bash
+  python3 -m pip install cryptography
+  ```
 - Exactly **one** ADB device/DUT connected.
 - Execute permissions and Linux (LF) line endings:
   ```bash
-  chmod +x build_apk.sh
-  dos2unix build_apk.sh apk.config   # required if files were transferred from Windows
+  chmod +x build_apk.sh config_crypto.py
+  dos2unix build_apk.sh apk.config config_crypto.py   # required if files were transferred from Windows
   ```
 
 ---
@@ -54,7 +59,9 @@ Maintain **a single golden copy of `build_apk.sh`** shared across multiple indep
 ```
 ~/code/telua_skill/.../build/           ← Master Repository (edit logic here)
 ├── build_apk.sh
-└── apk.config                          ← Configuration Template
+├── apk.config                          ← Configuration Template
+├── config_crypto.py                    ← Configuration Encryption Utility
+└── enc_apk.config                      ← Encrypted Configuration (Base64)
 
 ~/ws_main/android/qssi/tools/
 ├── build_apk.sh  -> (symlink to master build_apk.sh)
@@ -233,6 +240,51 @@ This ensures `Log.isLoggable(TAG, Log.DEBUG)` returns `true` in Java code and pe
 |---|---|
 | `TEST_RELATIVE_PATH` | Path to test suite directory relative to script directory |
 | `TEST_BUILD_SCRIPT` | Executable test runner script (e.g., `run_unittest_test.sh`) |
+
+---
+
+### 5.5 Configuration Encryption & Security (`config_crypto.py`)
+
+Encrypt or decrypt `apk.config` to protect internal targets, paths, and sensitive settings before committing or transferring files.
+
+* **Cryptographic Scheme**: PBKDF2-HMAC-SHA256 (600,000 iterations) with a 16-byte random salt to derive a 256-bit key for [Fernet](https://cryptography.io/en/latest/fernet/) (AES-128-CBC + HMAC-SHA256).
+* **Format**: Base64 text `base64(salt(16 bytes) || Fernet token)`, safe for version control or text exchange.
+* **File Permissions**: Output files are created with restricted permissions (`0600` / owner read-write only).
+* **Safety Guardrails**: Decryption outputs to `dec_apk.config` by default to avoid accidentally overwriting the active `apk.config`. Overwriting requires `--force`.
+
+#### Commands & Usage:
+
+```bash
+# 1. Encrypt apk.config -> enc_apk.config (interactive hidden prompt: use '?' or omit)
+./config_crypto.py encrypt ?
+./config_crypto.py encrypt
+
+# Or provide password directly via command line (NOTE: visible in shell history/ps):
+./config_crypto.py encrypt 12345
+
+# Or pipe password via stdin:
+echo "12345" | ./config_crypto.py encrypt -
+
+# 2. Decrypt enc_apk.config -> dec_apk.config (original apk.config is never touched)
+./config_crypto.py decrypt ?
+./config_crypto.py decrypt
+
+# Or with password directly:
+./config_crypto.py decrypt 12345
+
+# 3. Overwrite an existing dec_apk.config:
+./config_crypto.py decrypt ? --force
+./config_crypto.py decrypt 12345 --force
+
+# 4. Custom input and output paths:
+./config_crypto.py encrypt ? -i my.config -o my_enc.config
+./config_crypto.py decrypt ? -i my_enc.config -o my_dec.config --force
+```
+
+| Action | Default Input | Default Output | Behavior |
+|---|---|---|---|
+| `encrypt` | `apk.config` | `enc_apk.config` | Overwrites existing output file automatically |
+| `decrypt` | `enc_apk.config` | `dec_apk.config` | Preserves existing file; requires `--force` to overwrite |
 
 ---
 
