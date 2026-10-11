@@ -9,8 +9,8 @@
 set -e
 
 # --- Constants & Global Defaults ---
-SCRIPT_VERSION="2.5.0"
-SCRIPT_LAST_UPDATED="2026-10-11"
+SCRIPT_VERSION="2.6.0"
+SCRIPT_LAST_UPDATED="2026-10-12"
 CONFIG_FILE_NAME="apk.config"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -78,6 +78,9 @@ Options:
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
   --softlink [path]           Symlink this script + copy $CONFIG_FILE_NAME into [path] (overwrites)
                               (defaults to SOFTLINK_TARGET_PATH from $CONFIG_FILE_NAME if omitted)
+  --audio, audio [action]     Control audio via ADB shell: vol-up | vol-down | vol-mute | d (dump)
+                              Commands are read dynamically from $CONFIG_FILE_NAME:
+                              ADB_SHELL_AUDIO_UP, DOWN, MUTE, D
   --repo-sync                 Run 'repo sync' in ROOT_DIR, cd to android/qssi & run post_sync_cli before build
   --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' and exit (no sync, no build)
   --git-diff                  Run 'git diff HEAD^ HEAD' in this script's git repo and exit
@@ -247,6 +250,29 @@ parse_arguments() {
                 TEST_MODE="$2"
                 shift 2
                 ;;
+            --audio|audio)
+                if [ -n "$2" ] && [[ "$2" != --* ]]; then
+                    AUDIO_ACTION="$2"
+                    shift 2
+                else
+                    AUDIO_ACTION=""
+                    shift 1
+                fi
+                handle_audio_command "$AUDIO_ACTION"
+                exit 0
+                ;;
+            vol-up|--vol-up)
+                handle_audio_command "vol-up"
+                exit 0
+                ;;
+            vol-down|--vol-down)
+                handle_audio_command "vol-down"
+                exit 0
+                ;;
+            vol-mute|--vol-mute)
+                handle_audio_command "vol-mute"
+                exit 0
+                ;;
             -h|--help|help)
                 print_help
                 exit 0
@@ -258,6 +284,141 @@ parse_arguments() {
                 ;;
         esac
     done
+}
+
+# --- 1d. Audio Control & Custom ADB Shell Commands (--audio / audio) ---
+show_audio_help() {
+    local up_cmd="${ADB_SHELL_AUDIO_UP:-${ADB_SHELL_AUDIO_VOL_UP:-${ADB_SHELL_VOL_UP:-cmd media_session volume --show --adj raise}}}"
+    local down_cmd="${ADB_SHELL_AUDIO_DOWN:-${ADB_SHELL_AUDIO_DONW:-${ADB_SHELL_AUDIO_VOL_DOWN:-${ADB_SHELL_VOL_DOWN:-cmd media_session volume --show --adj lower}}}}"
+    local mute_cmd="${ADB_SHELL_AUDIO_MUTE:-${ADB_SHELL_AUDIO_VOL_MUTE:-${ADB_SHELL_VOL_MUTE:-cmd media_session volume --show --adj mute}}}"
+    local d_cmd="${ADB_SHELL_AUDIO_D:-${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
+
+    cat <<EOF
+
+telua audio - Android / Car Audio Shell Control Utility
+Config loaded from: $CONFIG_FILE
+
+Usage:
+  telua audio <action>
+  telua --audio <action>
+
+Supported Actions:
+  vol-up, up             Increase audio volume
+                         ADB Shell: $up_cmd
+                         (Config variable: ADB_SHELL_AUDIO_UP)
+
+  vol-down, down         Decrease audio volume
+                         ADB Shell: $down_cmd
+                         (Config variable: ADB_SHELL_AUDIO_DOWN)
+
+  vol-mute, mute         Toggle or set volume mute
+                         ADB Shell: $mute_cmd
+                         (Config variable: ADB_SHELL_AUDIO_MUTE)
+
+  d, dump                Dump audio service state
+                         ADB Shell: $d_cmd
+                         (Config variable: ADB_SHELL_AUDIO_D)
+
+Examples:
+  telua audio vol-up           # Increase volume
+  telua audio vol-down         # Decrease volume
+  telua audio vol-mute         # Mute audio
+  telua audio d                # Dump audio status / CarAudioService
+  telua --audio vol-up         # Flag syntax also supported
+  telua vol-up                 # Direct shortcut
+
+Configuration:
+  Commands are read directly from '$CONFIG_FILE_NAME':
+    ADB_SHELL_AUDIO_UP="..."
+    ADB_SHELL_AUDIO_DOWN="..."
+    ADB_SHELL_AUDIO_MUTE="..."
+    ADB_SHELL_AUDIO_D="..."
+
+  Compatible with standard Android (cmd media_session / input keyevent)
+  and Android Automotive CarShellCommand (cmd car_service ...).
+
+EOF
+}
+
+handle_audio_command() {
+    local action="$1"
+
+    if [ -z "$action" ] || [ "$action" = "help" ] || [ "$action" = "--help" ] || [ "$action" = "-h" ]; then
+        show_audio_help
+        return 0
+    fi
+
+    local action_normalized
+    action_normalized=$(echo "$action" | tr '[:upper:]' '[:lower:]' | tr '_' '-')
+
+    local adb_cmd=""
+    local action_label=""
+
+    case "$action_normalized" in
+        vol-up|up|volup|volume-up|raise)
+            action_label="Volume Up"
+            adb_cmd="${ADB_SHELL_AUDIO_UP:-${ADB_SHELL_AUDIO_VOL_UP:-${ADB_SHELL_VOL_UP:-cmd media_session volume --show --adj raise}}}"
+            ;;
+        vol-down|down|voldown|volume-down|lower)
+            action_label="Volume Down"
+            adb_cmd="${ADB_SHELL_AUDIO_DOWN:-${ADB_SHELL_AUDIO_DONW:-${ADB_SHELL_AUDIO_VOL_DOWN:-${ADB_SHELL_VOL_DOWN:-cmd media_session volume --show --adj lower}}}}"
+            ;;
+        vol-mute|mute|volmute|volume-mute)
+            action_label="Volume Mute"
+            adb_cmd="${ADB_SHELL_AUDIO_MUTE:-${ADB_SHELL_AUDIO_VOL_MUTE:-${ADB_SHELL_VOL_MUTE:-cmd media_session volume --show --adj mute}}}"
+            ;;
+        d|dump|dumpsys|status)
+            action_label="Audio Dump"
+            adb_cmd="${ADB_SHELL_AUDIO_D:-${ADB_SHELL_AUDIO_DUMP:-${ADB_SHELL_DUMP:-dumpsys audio}}}"
+            ;;
+        *)
+            # Check if matching custom variable ADB_SHELL_AUDIO_<ACTION> or ADB_SHELL_<ACTION> is defined in config
+            local var_suffix
+            var_suffix=$(echo "$action" | tr '[:lower:]' '[:upper:]' | tr '-' '_')
+            local var_audio="ADB_SHELL_AUDIO_${var_suffix}"
+            local var_generic="ADB_SHELL_${var_suffix}"
+
+            if [ -n "${!var_audio}" ]; then
+                action_label="Custom Audio ($action)"
+                adb_cmd="${!var_audio}"
+            elif [ -n "${!var_generic}" ]; then
+                action_label="Custom ADB Shell ($action)"
+                adb_cmd="${!var_generic}"
+            else
+                log_error "Unknown audio action '$action'!"
+                log_error "Supported actions: vol-up | vol-down | vol-mute | d (or define $var_audio in $CONFIG_FILE_NAME)"
+                show_audio_help
+                exit 1
+            fi
+            ;;
+    esac
+
+    if ! command -v adb >/dev/null 2>&1; then
+        log_error "'adb' command not found. Please ensure Android platform-tools is in your PATH."
+        exit 1
+    fi
+
+    # Verify device state
+    local dev_state
+    dev_state=$(adb get-state 2>/dev/null || echo "offline")
+    if [ "$dev_state" != "device" ]; then
+        log_error "No Android device connected or device is not ready (state: $dev_state)."
+        log_error "Please connect a device via USB/TCP and verify with 'adb devices'."
+        exit 1
+    fi
+
+    log_info "Executing $action_label via ADB Shell..."
+    echo -e "  \033[1;36m[ADB CMD]\033[0m adb shell $adb_cmd"
+
+    # Execute ADB shell command
+    adb shell "$adb_cmd"
+    local ret=$?
+    if [ $ret -eq 0 ]; then
+        log_success "$action_label command executed successfully."
+    else
+        log_error "Failed to execute '$action_label' command on device (exit code: $ret)."
+        exit $ret
+    fi
 }
 
 # --- 1a. Install Alias into ~/.bashrc (--install) ---
