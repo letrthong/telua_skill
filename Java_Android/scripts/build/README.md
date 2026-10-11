@@ -236,15 +236,15 @@ All repo-related options are explicitly prefixed with `REPO_` to clearly disting
 
 ---
 
-### 5.3 Device Deployment & Diagnostics
+### 5.3 Device Deployment & Diagnostics (Android / ADB)
 
 | Variable | Default | Description |
 |---|---|---|
-| `ENABLE_DEPLOY` | `"true"` | Enables or disables pushing APK to connected device |
+| `ENABLE_ANDROID_DEPLOY` | `"true"` | Enables or disables pushing APK to connected Android device (also supports legacy `ENABLE_DEPLOY`) |
 | `ENABLE_DEBUG_LOG` | `"true"` | Automatically sets debug log properties on the device |
 | `DEBUG_LOG_LEVEL` | `"DEBUG"` | Target logging level (`DEBUG` or `VERBOSE`) |
 | `DEBUG_LOG_TAGS` | profile default | Space-separated log tags (e.g., `"CarAudioService CarZones"`) |
-| `ENABLE_LOGCAT` | `"false"` | Captures post-deployment logcat to file |
+| `ENABLE_ANDROID_LOGCAT` | `"false"` | Captures post-deployment logcat to file (also supports legacy `ENABLE_LOGCAT`) |
 | `LOGCAT_FILTER` | profile default | Regex filter for `adb logcat -d \| grep -E` |
 | `LOGCAT_SETTLE_SECONDS` | `"10"` | Seconds to wait after restart before dumping logcat buffer |
 
@@ -271,6 +271,8 @@ Placeholder variables reserved in `apk.config` for future QNX Hypervisor / Guest
 
 | Variable | Default | Description |
 |---|---|---|
+| `ENABLE_QNX_DEPLOY` | `"false"` | Enables or disables deploying to QNX target environment (reserved, default: false) |
+| `ENABLE_QNX_LOG` | `"false"` | Enables or disables capturing slog2 logs on QNX target (reserved, default: false) |
 | `QNX_HOST_IP` | `"192.168.1.100"` | QNX Target Hostname or IP address |
 | `QNX_SSH_PORT` | `"22"` | Target SSH / SCP communication port |
 | `QNX_TARGET_DIR` | `"/var/opt/apps"` | Destination filesystem directory on QNX target |
