@@ -25,6 +25,7 @@ Usage: $0 [OPTIONS]
 
 Options:
   --info                      Display target, build config, and ADB device info
+  --platform android|qnx      Target platform: 'android' (default) or 'qnx' (reserved)
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
   --softlink [path]           Symlink this script + copy $CONFIG_FILE_NAME into [path] (overwrites)
@@ -54,6 +55,14 @@ parse_arguments() {
             --info)
                 SHOW_INFO="true"
                 shift
+                ;;
+            --platform)
+                if [[ "$2" != "android" && "$2" != "qnx" ]]; then
+                    log_error "--platform requires 'android' or 'qnx', got '$2'"
+                    exit 1
+                fi
+                CLI_PLATFORM="$2"
+                shift 2
                 ;;
             --start-deploy)
                 if [[ "$2" != "true" && "$2" != "false" ]]; then
@@ -222,21 +231,19 @@ install_to_project() {
 }
 
 # --- 1b. Diagnostic Info (--info) ---
-show_info() {
-    resolve_android_paths >/dev/null 2>&1 || true
-
+show_info_general() {
     local module_name="${MODULE_NAME:-${APK_FILE_NAME%.apk}}"
     local jobs="${BUILD_JOBS:-$(nproc 2>/dev/null || echo 8)}"
-    echo -e "\n\033[1;36m=== AOSP BUILD & TARGET INFO ===\033[0m"
+    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
+
+    echo -e "\n\033[1;36m=== 1. GENERAL BUILD CONFIGURATION ===\033[0m"
     echo "  Project:          ${ACTIVE_PROJECT:-default}"
+    echo "  Target Platform:  $target_platform"
     echo "  Target Lunch:     ${CONFIG_TARGET_PRODUCT}-${CONFIG_TARGET_BUILD_VARIANT}"
     echo "  Module Build Jobs:-j$jobs (m $module_name)"
     echo "  Module Name:      $module_name"
     echo "  Source Path:      $SOURCE_CODE_RELATIVE_PATH"
     echo "  APK Output:       $APK_OUTPUT_RELATIVE_PATH/$APK_FILE_NAME"
-    echo "  Deploy Path:      $APK_DEPLOY_PATH"
-    echo "  Logcat Filter:    ${LOGCAT_FILTER:-None (full)}"
-    echo "  Debug Tags:       ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
     echo "  Root Dir:         ${ROOT_DIR:-Not found}"
     echo "  AOSP Top Rel:     ${AOSP_TOP_REL_PATH:-Auto-detect (android/qssi or android)}"
     echo "  AOSP Top:         ${ANDROID_TOP:-Not found (no 'android' dir above $SCRIPT_DIR)}"
@@ -252,20 +259,58 @@ show_info() {
     else
         echo "  Softlink Target:  Not configured (provide path via CLI)"
     fi
+}
 
+show_info_android() {
+    echo -e "\n\033[1;32m=== 2. ANDROID TARGET INFO (ADB) ===\033[0m"
+    echo "  Platform:         android"
+    echo "  Deploy Path:      $APK_DEPLOY_PATH"
+    echo "  Logcat Filter:    ${LOGCAT_FILTER:-None (full)}"
+    echo "  Debug Tags:       ${DEBUG_LOG_TAGS:-None} (Enabled: ${ENABLE_DEBUG_LOG:-false})"
     if command -v adb >/dev/null 2>&1; then
         local dev_state build_type internal_id vendor_build_type
         dev_state=$(adb get-state 2>/dev/null || echo "offline")
         build_type=$(adb shell getprop ro.build.type 2>/dev/null | tr -d '\r')
         internal_id=$(adb shell getprop ro.build.internal.id 2>/dev/null | tr -d '\r')
         vendor_build_type=$(adb shell getprop ro.vendor.build.type 2>/dev/null | tr -d '\r')
-        echo "  ADB Device:   $dev_state (Build: ${build_type:-unknown})"
-        echo "  Internal ID:  ${internal_id:-unknown}"
-        echo "  Vendor Build: ${vendor_build_type:-unknown}"
+        echo "  ADB Device State: $dev_state (Build: ${build_type:-unknown})"
+        echo "  Internal ID:      ${internal_id:-unknown}"
+        echo "  Vendor Build:     ${vendor_build_type:-unknown}"
     else
-        echo "  ADB Binary:   Not installed"
+        echo "  ADB Binary:       Not installed / not in PATH"
     fi
-    echo -e "\033[1;36m================================\033[0m\n"
+}
+
+show_info_qnx() {
+    echo -e "\n\033[1;33m=== 2. QNX TARGET INFO (Hypervisor / Guest VM) ===\033[0m"
+    echo "  Platform:         qnx"
+    echo "  Deploy Path:      ${QNX_TARGET_DIR:-${QNX_DEPLOY_PATH:-${APK_DEPLOY_PATH:-N/A}}}"
+    echo "  Target Host/IP:   ${QNX_HOST_IP:-${QNX_HOST:-Not configured (e.g. 192.168.1.100)}}"
+    echo "  SSH/SCP Port:     ${QNX_SSH_PORT:-22}"
+    echo "  Status:           Placeholder - QNX deployment & diagnostics will be supplemented here"
+    echo "  Note:             Android ADB properties are skipped on QNX platform."
+}
+
+show_info() {
+    resolve_android_paths >/dev/null 2>&1 || true
+
+    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
+
+    show_info_general
+
+    case "$target_platform" in
+        android)
+            show_info_android
+            ;;
+        qnx)
+            show_info_qnx
+            ;;
+        *)
+            echo -e "\n\033[1;31m=== 2. PLATFORM TARGET INFO (Unknown: $target_platform) ===\033[0m"
+            echo "  Unsupported platform: '$target_platform'. Supported: 'android' | 'qnx'"
+            ;;
+    esac
+    echo -e "\033[1;36m====================================================\033[0m\n"
     exit 0
 }
 
@@ -299,6 +344,9 @@ load_and_validate_config() {
         log_error "Please update your $CONFIG_FILE_NAME file to include all required fields."
         exit 1
     fi
+
+    # Resolve target platform (CLI flag takes precedence over config, default: android)
+    PLATFORM="${CLI_PLATFORM:-${TARGET_PLATFORM:-android}}"
 }
 
 # --- 3. Run Test Mode ---
@@ -1023,16 +1071,11 @@ is_deploy_path_writable() {
 }
 
 
-# --- 9. Deploy APK to Device ---
-deploy_apk() {
-    if [ "$ENABLE_DEPLOY" != "true" ]; then
-        log_info "ENABLE_DEPLOY is not 'true', skipping device deployment."
-        return 0
-    fi
-
+# --- 9a. Deploy APK to Android Device (AOSP / ADB) ---
+deploy_android() {
     echo ""
     log_info "============================================"
-    log_info " Starting Deployment"
+    log_info " Starting Deployment: Android Device (ADB)"
     log_info "============================================"
 
     if ! command -v adb >/dev/null 2>&1; then
@@ -1094,12 +1137,56 @@ deploy_apk() {
     fi
 
     adb devices
-    log_success "Deployment completed successfully."
+    log_success "Android deployment completed successfully."
+}
+
+# --- 9b. Deploy APK to QNX Hypervisor (Android Guest VM) ---
+deploy_qnx() {
+    echo ""
+    log_info "============================================"
+    log_info " Starting Deployment: QNX Hypervisor"
+    log_info "============================================"
+
+    log_warn "Target platform is set to 'qnx'."
+    log_warn "Direct deployment to QNX Hypervisor is currently under development (not yet supported)."
+    log_info "Planned workflow for QNX Hypervisor:"
+    log_info "  1. Connect ADB over virtual network (adb connect <QNX_ANDROID_IP>:5555)"
+    log_info "  2. Push APK into Android Guest VM / shared virtio-fs mount"
+    log_info "  3. Fast-restart Android Guest VM (qvm-control) without rebooting QNX host"
+    log_warn "Skipping device deployment for now. APK module build completed successfully."
+    return 0
+}
+
+# --- 9. Deploy APK Dispatcher ---
+deploy_apk() {
+    if [ "$ENABLE_DEPLOY" != "true" ]; then
+        log_info "ENABLE_DEPLOY is not 'true', skipping device deployment."
+        return 0
+    fi
+
+    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
+    case "$target_platform" in
+        android)
+            deploy_android
+            ;;
+        qnx)
+            deploy_qnx
+            ;;
+        *)
+            log_error "Unsupported deployment platform '$target_platform'! Supported: 'android' | 'qnx'"
+            exit 1
+            ;;
+    esac
 }
 
 # --- 10. Logcat Capture ---
 capture_logs() {
     if [ "$ENABLE_DEPLOY" != "true" ] || [ "$ENABLE_LOGCAT" != "true" ]; then
+        return 0
+    fi
+
+    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
+    if [ "$target_platform" = "qnx" ]; then
         return 0
     fi
 

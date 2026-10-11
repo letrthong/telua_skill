@@ -127,7 +127,8 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | Option | Description |
 |---|---|
 | *(none)* | Full cycle: Build + Deploy (if `ENABLE_DEPLOY="true"`) + Full Device Reboot |
-| `--info` | Displays project info, lunch target, paths, and ADB device state, then exits |
+| `--info` | Displays general build configuration followed by platform-specific target info (Android / QNX), then exits |
+| `--platform android\|qnx` | Target deployment platform: `android` (default, active) or `qnx` (reserved, currently skips deployment) |
 | `--start-deploy true\|false` | Overrides `ENABLE_DEPLOY` defined in `apk.config` |
 | `--no-reboot` | Fast runtime restart (`stop && start`, ~10–15s) instead of full device reboot |
 | `--softlink [path]` | Creates symlink to `build_apk.sh` and copies `apk.config` to `[path]` (falls back to `SOFTLINK_TARGET_PATH` from `apk.config` if omitted) |
@@ -211,6 +212,7 @@ The directory specified by `SOURCE_CODE_RELATIVE_PATH` must contain the build an
 
 | Variable | Description |
 |---|---|
+| `TARGET_PLATFORM` | Target deployment platform: `"android"` (default, fully supported via ADB) or `"qnx"` (reserved for QNX Hypervisor, skips direct deploy) |
 | `AOSP_TOP_REL_PATH` | Relative path to AOSP build root from `ROOT_DIR`. Examples: `"android/qssi"` (Qualcomm QSSI) or `"android"` (MediaTek / NXP / pure AOSP / QNX Android container). Defaults to auto-detecting `android/qssi` if present, otherwise `android`. |
 | `CONFIG_TARGET_PRODUCT` | Target product for `lunch` (e.g., `abc_xyz_in`) |
 | `CONFIG_TARGET_BUILD_VARIANT` | Target build variant (`userdebug` or `eng`) |
@@ -258,6 +260,18 @@ This ensures `Log.isLoggable(TAG, Log.DEBUG)` returns `true` in Java code and pe
 |---|---|
 | `TEST_RELATIVE_PATH` | Path to test suite directory relative to script directory |
 | `TEST_BUILD_SCRIPT` | Executable test runner script (e.g., `run_unittest_test.sh`) |
+
+---
+
+### 5.4b QNX Target Configuration (Reserved for Future Use)
+
+Placeholder variables reserved in `apk.config` for future QNX Hypervisor / Guest VM deployment workflows:
+
+| Variable | Default | Description |
+|---|---|---|
+| `QNX_HOST_IP` | `"192.168.1.100"` | QNX Target Hostname or IP address |
+| `QNX_SSH_PORT` | `"22"` | Target SSH / SCP communication port |
+| `QNX_TARGET_DIR` | `"/var/opt/apps"` | Destination filesystem directory on QNX target |
 
 ---
 
@@ -328,7 +342,9 @@ flowchart TD
     J -->|false| L[build_apk: rm old out & m module -jN]
     L --> M{ENABLE_DEPLOY?}
     M -->|false| Z[Success]
-    M -->|true| N[ensure_adb_remount: root & rw write test]
+    M -->|true| M2{TARGET_PLATFORM?}
+    M2 -->|qnx| Z_QNX[deploy_qnx: Warn & Skip]
+    M2 -->|android| N[deploy_android: ensure_adb_remount]
     N --> O[Push APK, chmod 644, rm oat cache, sync]
     O --> P[Set persist.log.tag properties]
     P --> Q[Clear logcat ring buffer: adb logcat -c]
