@@ -134,11 +134,26 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 | `--repo-sync` | Executes `repo sync` from `ROOT_DIR`, navigates to `android/qssi`, and runs `post_sync_cli` before building |
 | `--repo-sync-only` | Executes `repo sync` and `post_sync_cli` only, then exits without building |
 | `--repo-reset` | Executes `repo forall -c "git reset --hard && git clean -xdf"` before `repo sync` (discards local edits) |
+| `--git-diff` | Displays `git diff HEAD^ HEAD` in the script's git repository and exits |
+| `--git-amend` | Runs `git commit --amend --no-edit` (staged changes only) and exits |
+| `--git-help` | Displays cheatsheet of commonly used Git commands and exits |
+| `--docker-help` | Displays cheatsheet of commonly used Docker commands and exits |
+| `--find-file <pattern> [path]` | Searches for files by pattern in `[path]` (defaults to `.` if omitted) |
+| `--find-dir <pattern> [path]` | Searches for directories by pattern in `[path]` (defaults to `.` if omitted) |
+| `--find-text <text> [path]` | Greps for text string in files under `[path]` (defaults to `.` if omitted) |
 | `--test-mode true\|false` | Runs unit test suite instead of compiling the APK |
 | `-h`, `--help` | Displays help message and exits |
 
 #### Usage Examples:
 ```bash
+./build_apk.sh --info                 # Inspect environment and device state
+./build_apk.sh --git-help             # View Git cheatsheet of frequently used commands
+./build_apk.sh --docker-help          # View Docker daemon & container cheatsheet
+./build_apk.sh --find-file "*.bp" packages/apps/Car # Find Android.bp files in specific path
+./build_apk.sh --find-dir "Oem*" .    # Find directories matching pattern
+./build_apk.sh --find-text "DEBUG_TAG" src/ # Grep text string inside files
+./build_apk.sh --git-diff             # View diff of the last commit
+./build_apk.sh --git-amend            # Amend staged changes to the last commit
 ./build_apk.sh --start-deploy false   # Compile APK only, do not push to device
 ./build_apk.sh --no-reboot            # Fast deploy after editing Java source files
 ./build_apk.sh --repo-sync            # Sync repo from ROOT_DIR, then build and deploy

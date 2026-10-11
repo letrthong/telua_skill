@@ -33,6 +33,11 @@ Options:
   --repo-reset                Run 'repo forall -c "git reset --hard && git clean -xdf"' and exit (no sync, no build)
   --git-diff                  Run 'git diff HEAD^ HEAD' in this script's git repo and exit
   --git-amend                 Run 'git commit --amend --no-edit' (staged changes only) in this script's git repo and exit
+  --git-help                  Display cheatsheet of commonly used Git commands and exit
+  --docker-help               Display cheatsheet of commonly used Docker commands and exit
+  --find-file <pattern> [path] Search for files by pattern in [path] (default: '.')
+  --find-dir <pattern> [path]  Search for directories by pattern in [path] (default: '.')
+  --find-text <text> [path]    Search for text in files under [path] (default: '.')
   --test-mode true|false     Run unit test suite instead of full build
   -h, --help, help           Display this help message and exit
 
@@ -91,6 +96,53 @@ parse_arguments() {
             --git-amend)
                 GIT_AMEND="true"
                 shift
+                ;;
+            --git-help)
+                SHOW_GIT_HELP="true"
+                shift
+                ;;
+            --docker-help)
+                SHOW_DOCKER_HELP="true"
+                shift
+                ;;
+            --find-file|find_file)
+                if [ -z "$2" ] || [[ "$2" == --* ]]; then
+                    log_error "Missing pattern for --find-file! Usage: $0 --find-file <file_pattern> [search_path]"
+                    exit 1
+                fi
+                ACTION_CMD="find_file"
+                SEARCH_PATTERN="$2"
+                shift 2
+                if [ -n "$1" ] && [[ "$1" != --* ]]; then
+                    SEARCH_TARGET_PATH="$1"
+                    shift 1
+                fi
+                ;;
+            --find-dir|find_dir)
+                if [ -z "$2" ] || [[ "$2" == --* ]]; then
+                    log_error "Missing pattern for --find-dir! Usage: $0 --find-dir <dir_pattern> [search_path]"
+                    exit 1
+                fi
+                ACTION_CMD="find_dir"
+                SEARCH_PATTERN="$2"
+                shift 2
+                if [ -n "$1" ] && [[ "$1" != --* ]]; then
+                    SEARCH_TARGET_PATH="$1"
+                    shift 1
+                fi
+                ;;
+            --find-text|find_text)
+                if [ -z "$2" ] || [[ "$2" == --* ]]; then
+                    log_error "Missing text for --find-text! Usage: $0 --find-text <text_pattern> [search_path]"
+                    exit 1
+                fi
+                ACTION_CMD="find_text"
+                SEARCH_PATTERN="$2"
+                shift 2
+                if [ -n "$1" ] && [[ "$1" != --* ]]; then
+                    SEARCH_TARGET_PATH="$1"
+                    shift 1
+                fi
                 ;;
             --test-mode)
                 if [[ "$2" != "true" && "$2" != "false" ]]; then
@@ -400,6 +452,174 @@ run_git_amend() {
         exit 1
     fi
     log_success "Last commit amended."
+    exit 0
+}
+
+# --- 4c. Git Help Utility (--git-help: frequently used Git commands) ---
+# Add or customize your most-used Git commands in this function.
+show_git_help() {
+    cat <<'EOF'
+
+==============================================================================
+                    FREQUENTLY USED GIT COMMANDS CHEATSHEET
+==============================================================================
+
+[1. STATUS & INSPECTION]
+  git status -s                             # Short status (modified/untracked)
+  git log --oneline -n 10                   # View last 10 commits compactly
+  git log --graph --oneline --decorate -15  # Visual branch commit history graph
+  git show HEAD                             # View latest commit changes & metadata
+  git diff HEAD^ HEAD                       # Diff between previous commit and HEAD
+
+[2. STAGING & COMMIT]
+  git add -u                                # Stage tracked modified/deleted files only
+  git add .                                 # Stage all modified and new files
+  git commit -m "feat: message"             # Commit staged changes with message
+  git commit -s -m "feat: message"          # Commit with Signed-off-by (AOSP standard)
+  git commit --amend --no-edit              # Add staged changes to last commit silently
+  git commit --amend                        # Modify last commit message / content
+
+[3. DIFF & COMPARISON]
+  git diff                                  # Diff unstaged changes vs working tree
+  git diff --cached (or --staged)           # Diff staged changes vs HEAD
+  git diff HEAD~2 HEAD                      # Compare changes across last 2 commits
+  git diff <branch_a>..<branch_b>           # Compare changes between two branches
+
+[4. STASH & WORKSPACE ISOLATION]
+  git stash push -m "WIP work"              # Stash uncommitted changes with note
+  git stash list                            # List all stashed changes
+  git stash pop                             # Re-apply latest stash and drop it
+  git stash apply                           # Re-apply latest stash and keep it
+  git stash drop                            # Discard latest stash
+
+[5. RESET, UNDO & CLEAN]
+  git restore <file>                        # Discard changes in working directory
+  git restore --staged <file>               # Unstage file (keep local modifications)
+  git reset --soft HEAD^                    # Undo last commit, keep changes staged
+  git reset --mixed HEAD^                   # Undo last commit, keep changes unstaged
+  git reset --hard HEAD                     # Discard all uncommitted changes
+  git clean -fd                             # Remove untracked files & directories
+  git clean -xdf                            # Remove ALL untracked + gitignored files
+
+[6. BRANCHING & SWITCHING]
+  git branch -a                             # List local and remote branches
+  git checkout -b <new_branch>              # Create and switch to new branch
+  git switch <existing_branch>              # Switch branch (modern Git syntax)
+  git branch -D <branch_name>               # Force delete a local branch
+
+[7. GOOGLE REPO (MULTI-GIT AOSP TOOLS)]
+  repo forall -c "git status -s"            # Check git status across all sub-repos
+  repo forall -c "git reset --hard && git clean -xdf" # Hard reset all repos
+  repo diff -u                              # View diff across all repos
+  repo upload .                             # Upload current project to Gerrit
+
+[8. SEARCH UTILITIES (FILE, DIRECTORY & TEXT)]
+  ./build_apk.sh --find-file <pattern> [path] # Find file by name (default: '.')
+  ./build_apk.sh --find-dir <pattern> [path]  # Find directory by name (default: '.')
+  ./build_apk.sh --find-text <text> [path]    # Grep text in files (default: '.')
+
+==============================================================================
+TIP: You can edit show_git_help() in build_apk.sh to add your own custom commands!
+==============================================================================
+
+EOF
+    exit 0
+}
+
+# --- 4d. Search Utilities (find_file, find_dir, find_text) ---
+# Supports passing target search path as optional 2nd argument (defaults to '.')
+find_file() {
+    local pattern="$1"
+    local search_path="${2:-.}"
+    if [ -z "$pattern" ]; then
+        log_error "Usage: find_file <file_pattern> [search_path]"
+        exit 1
+    fi
+    log_info "Searching for file '$pattern' in '$search_path'..."
+    find "$search_path" -type f -name "$pattern" 2>/dev/null
+}
+
+find_dir() {
+    local pattern="$1"
+    local search_path="${2:-.}"
+    if [ -z "$pattern" ]; then
+        log_error "Usage: find_dir <dir_pattern> [search_path]"
+        exit 1
+    fi
+    log_info "Searching for directory '$pattern' in '$search_path'..."
+    find "$search_path" -type d -name "$pattern" 2>/dev/null
+}
+
+find_text() {
+    local text="$1"
+    local search_path="${2:-.}"
+    if [ -z "$text" ]; then
+        log_error "Usage: find_text <text_pattern> [search_path]"
+        exit 1
+    fi
+    log_info "Searching for text '$text' in '$search_path'..."
+    grep -rnw "$search_path" -e "$text" 2>/dev/null
+}
+
+# --- 4e. Docker Help Utility (--docker-help: frequently used Docker commands) ---
+show_docker_help() {
+    cat <<'EOF'
+
+==============================================================================
+                    FREQUENTLY USED DOCKER COMMANDS CHEATSHEET
+==============================================================================
+
+[1. SERVICE & DAEMON MANAGEMENT (SYSTEMD)]
+  sudo systemctl status docker              # Check Docker daemon service status
+  sudo systemctl start docker               # Start Docker daemon
+  sudo systemctl stop docker                # Stop Docker daemon
+  sudo systemctl restart docker             # Restart Docker daemon
+  sudo systemctl enable docker              # Enable Docker to start automatically on boot
+  sudo journalctl -u docker -f              # Follow live Docker service logs
+
+[2. CONTAINER LIFECYCLE]
+  docker ps                                 # List running containers
+  docker ps -a                              # List all containers (including exited)
+  docker run -it --name <name> <image> bash # Run container interactively
+  docker start <container_id/name>          # Start stopped container
+  docker stop <container_id/name>           # Stop running container gracefully
+  docker restart <container_id/name>        # Restart container
+  docker rm <container_id/name>             # Remove a stopped container
+  docker rm -f $(docker ps -aq)             # Force remove ALL containers
+
+[3. EXEC & INTERACTIVE SHELL]
+  docker exec -it <container> /bin/bash     # Enter container bash terminal
+  docker exec -it <container> sh            # Enter container sh terminal
+  docker exec -u 0 -it <container> bash     # Enter container as root user
+  docker logs -f <container>                # Follow real-time container stdout/stderr
+  docker logs --tail 100 <container>        # View last 100 log lines
+
+[4. IMAGE MANAGEMENT]
+  docker images                             # List downloaded/built images
+  docker pull <image>:<tag>                 # Download image from registry
+  docker build -t <tag_name> .              # Build image from Dockerfile in current dir
+  docker rmi <image_id>                     # Remove specific local image
+  docker rmi -f $(docker images -q)         # Force remove ALL unused images
+
+[5. VOLUMES & WORKSPACE MOUNTING]
+  docker cp <local_path> <container>:<path> # Copy files from host into container
+  docker cp <container>:<path> <local_path> # Copy files from container to host
+  docker run -v $(pwd):/workspace <image>   # Mount current directory into container
+  docker volume ls                          # List all persistent volumes
+  docker volume prune -f                    # Remove unused volumes
+
+[6. RESOURCE STATS & SYSTEM CLEANUP]
+  docker stats                              # Live CPU, memory, I/O usage per container
+  docker system df                          # Summary of Docker disk usage
+  docker system prune -f                    # Remove stopped containers, dangling images
+  docker system prune -a --volumes -f       # Deep clean: remove ALL unused docker assets
+
+==============================================================================
+TIP: When compiling AOSP inside Docker, preserve file ownership with:
+     docker run -u $(id -u):$(id -g) -v $(pwd):/src <image>
+==============================================================================
+
+EOF
     exit 0
 }
 
@@ -842,6 +1062,19 @@ main() {
 
     if [ "$SHOW_INFO" = "true" ]; then
         show_info
+    fi
+
+    if [ "$SHOW_GIT_HELP" = "true" ]; then
+        show_git_help
+    fi
+
+    if [ "$SHOW_DOCKER_HELP" = "true" ]; then
+        show_docker_help
+    fi
+
+    if [ -n "$ACTION_CMD" ]; then
+        "$ACTION_CMD" "$SEARCH_PATTERN" "${SEARCH_TARGET_PATH:-.}"
+        exit 0
     fi
 
     run_git_diff
