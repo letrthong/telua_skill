@@ -873,8 +873,8 @@ run_repo_sync() {
     post_sync_cli
 }
 
-# --- 5. Setup AOSP Build Environment ---
-setup_build_environment() {
+# --- 5a. Setup Android AOSP Build Environment ---
+setup_build_environment_android() {
     cd "$ANDROID_TOP"
 
     if [[ -n "$TARGET_PRODUCT" && -n "$TARGET_BUILD_VARIANT" ]]; then
@@ -888,7 +888,7 @@ setup_build_environment() {
         exit 1
     fi
 
-    log_info "Initializing environment: source build/envsetup.sh"
+    log_info "Initializing Android environment: source build/envsetup.sh"
     # envsetup.sh/lunch return non-zero on harmless warnings (e.g. symlink creation),
     # which 'set -e' would turn into an abort; success is verified via TARGET_PRODUCT below.
     set +e
@@ -904,7 +904,39 @@ setup_build_environment() {
         exit 1
     fi
 
-    log_success "Environment ready: $TARGET_PRODUCT-$TARGET_BUILD_VARIANT"
+    log_success "Android environment ready: $TARGET_PRODUCT-$TARGET_BUILD_VARIANT"
+}
+
+# --- 5b. Setup QNX Build Environment (SDP Toolchain) ---
+setup_build_environment_qnx() {
+    echo ""
+    log_info "============================================"
+    log_info " Setup QNX Build Environment (SDP Toolchain)"
+    log_info "============================================"
+
+    log_warn "Target platform is set to 'qnx'."
+    log_info "QNX build toolchain initialization template:"
+    log_info "  - Toolchain:    QNX Software Development Platform (SDP)"
+    log_info "  - Environment:  source qnxsdp-env.sh / export QNX_TARGET & QNX_HOST"
+    log_warn "QNX build environment setup is currently placeholder (will be supplemented later)."
+    return 0
+}
+
+# --- 5. Setup Build Environment Dispatcher ---
+setup_build_environment() {
+    local target_platform="${PLATFORM:-${TARGET_PLATFORM:-android}}"
+    case "$target_platform" in
+        android)
+            setup_build_environment_android
+            ;;
+        qnx)
+            setup_build_environment_qnx
+            ;;
+        *)
+            log_error "Unsupported build platform '$target_platform'! Supported: 'android' | 'qnx'"
+            exit 1
+            ;;
+    esac
 }
 
 # --- 6. Compile APK Module ---
