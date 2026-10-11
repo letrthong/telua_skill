@@ -46,18 +46,31 @@ show_version() {
 }
 
 print_help() {
+    local real_script
+    if command -v realpath >/dev/null 2>&1; then
+        real_script="$(realpath "${BASH_SOURCE[0]}")"
+    elif command -v readlink >/dev/null 2>&1; then
+        real_script="$(readlink -f "${BASH_SOURCE[0]}")"
+    else
+        real_script="$(cd "$SCRIPT_DIR" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+    fi
+
     cat <<EOF
-build_apk.sh - AOSP & QNX Automotive Build, Deployment and Automation Tool
+telua / build_apk.sh - AOSP & QNX Automotive Build, Deployment and Automation Tool
 Version:      v$SCRIPT_VERSION (Updated: $SCRIPT_LAST_UPDATED)
 Maintained by: letrthong@gmail.com
+Script Path:  $real_script
 
-Usage: $0 [OPTIONS]
+Usage: telua [OPTIONS]  (or: $0 [OPTIONS])
 
 Options:
-  --config <path>             Explicitly specify path to apk.config file
-  --init                      Initialize apk.config in current directory ($PWD)
-                              (prompts for password to decrypt enc_apk.config if present)
-  --install                   Install/update 'telua' alias in ~/.bashrc and source it
+  --install                   Install/update 'telua' alias in ~/.bashrc pointing to:
+                              $real_script
+                              (auto-sources ~/.bashrc upon completion)
+  --init                      Initialize $CONFIG_FILE_NAME in current directory (\$PWD):
+                              - Prompts for password to decrypt enc_apk.config
+                              - Press Enter to use default plain $CONFIG_FILE_NAME
+  --config <path>             Explicitly specify path to $CONFIG_FILE_NAME file
   -v, --version               Display script version and last update date, then exit
   --info                      Display general build config and platform target info
   --platform android|qnx      Target platform: 'android' (default) or 'qnx' (reserved)
@@ -78,8 +91,10 @@ Options:
   --test-mode true|false     Run unit test suite instead of full build
   -h, --help, help           Display this help message and exit
 
-Configuration:
-  Settings are loaded from: $CONFIG_FILE
+Configuration Info:
+  Active Config:              $CONFIG_FILE
+  Master Template:            $SCRIPT_DIR/$CONFIG_FILE_NAME
+  Encrypted Template:         $SCRIPT_DIR/enc_apk.config
 EOF
 }
 
