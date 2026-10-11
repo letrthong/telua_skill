@@ -128,10 +128,10 @@ nano apk.config          # configure ACTIVE_PROJECT="car_audio", target B
 |---|---|
 | *(none)* | Full cycle: Build + Deploy (if `ENABLE_DEPLOY="true"`) + Full Device Reboot |
 | `--config <path>` | Explicitly specifies path to `apk.config` to load |
-| `--init` | Initializes `apk.config` in current directory (`$PWD`) by decrypting `enc_apk.config` with password (or copying plain template) |
-| `--install` | Adds or updates alias `telua` in `~/.bashrc` pointing to `build_apk.sh`, and sources `~/.bashrc` |
-| `-v`, `--version` | Displays script version, release update date, and exits |
-| `--info` | Displays general build configuration followed by platform-specific target info (Android / QNX), then exits |
+| `--init`, `init` | Initializes `apk.config` in current directory (`$PWD`) by decrypting `enc_apk.config` with password (or copying plain template) |
+| `--install`, `install` | Adds or updates alias `telua` in `~/.bashrc` pointing to `build_apk.sh`, and sources `~/.bashrc` |
+| `-v`, `--version`, `version` | Displays script version, release update date, and exits |
+| `--info`, `info` | Displays general build configuration followed by platform-specific target info (Android / QNX), then exits |
 | `--platform android\|qnx` | Target deployment platform: `android` (default, active) or `qnx` (reserved, currently skips deployment) |
 | `--start-deploy true\|false` | Overrides `ENABLE_DEPLOY` defined in `apk.config` |
 | `--no-reboot` | Fast runtime restart (`stop && start`, ~10–15s) instead of full device reboot |

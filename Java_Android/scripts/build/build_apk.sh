@@ -64,15 +64,15 @@ Script Path:  $real_script
 Usage: telua [OPTIONS]  (or: $0 [OPTIONS])
 
 Options:
-  --install                   Install/update 'telua' alias in ~/.bashrc pointing to:
+  --install, install          Install/update 'telua' alias in ~/.bashrc pointing to:
                               $real_script
                               (auto-sources ~/.bashrc upon completion)
-  --init                      Initialize $CONFIG_FILE_NAME in current directory (\$PWD):
+  --init, init                Initialize $CONFIG_FILE_NAME in current directory (\$PWD):
                               - Prompts for password to decrypt enc_apk.config
                               - Press Enter to use default plain $CONFIG_FILE_NAME
   --config <path>             Explicitly specify path to $CONFIG_FILE_NAME file
-  -v, --version               Display script version and last update date, then exit
-  --info                      Display general build config and platform target info
+  -v, --version, version      Display script version and last update date, then exit
+  --info, info                Display general build config and platform target info
   --platform android|qnx      Target platform: 'android' (default) or 'qnx' (reserved)
   --start-deploy true|false   Override ENABLE_DEPLOY from $CONFIG_FILE_NAME
   --no-reboot                 Fast restart (stop && start) instead of full device reboot
